@@ -204,12 +204,10 @@ pred P3_azaltjson__json_term(Frame *Env) {
   char flag_str2comp_key[] = "str2comp";
 
   // オプション解析
-  if (UnifyAtomE(Env, opt, ATOM_NIL)) {
-    // 何もしない
-  } else if (!IsCons(opt)) {
+  if (!IsNil(opt) && !IsCons(opt)) {
     YIELD(FAIL);
   }
-  while (! IsNil(opt)) {
+  while (!IsNil(opt)) {
     char key_str[AZ_MAX_ATOM_LENGTH] = {0};
     if (! IsCons(opt)) { YIELD(FAIL); }
     GetCons(opt);
@@ -243,7 +241,15 @@ pred P3_azaltjson__json_term(Frame *Env) {
 
   (void )az_term_to_cstring(Env, ain, s, len + 1);
 
-  jx = json_loads(s, JSON_REJECT_DUPLICATES, &error);
+  /*
+    Jansson ver2.8
+    - JSON_REJECT_DUPLICATES  : 重複キーが含まれている場合にデコードエラー
+    - JSON_DECODE_ANY         : 任意の有効なJSON値を受け入れる（デフォルトでは配列またはオブジェクトのみ）
+    - JSON_DISABLE_EOF_CHECK  : JSONテキストの終端以降の末尾の余分なデータを許容
+    - JSON_DECODE_INT_AS_REAL : すべての数値を実数値（浮動小数点数）として解釈
+    - JSON_ALLOW_NUL          : 文字列値の中で\ u0000エスケープを許可
+  */
+  jx = json_loads(s, JSON_REJECT_DUPLICATES | JSON_DECODE_ANY, &error);
   if (jx == 0) {
     fprintf(stderr, "text:[%s]\n", error.text);
     fprintf(stderr, "%d:%d:%d, source:[%s]\n",
@@ -354,7 +360,7 @@ static json_t* make_json_value_from_prolog_value(Frame* Env, TERM* term) {
       GetArg(term, 1);
       TERM *pairlist_term = next_var_cell - 1; // ペアリスト
 
-      while (! IsNil(pairlist_term)) {
+      while (!IsNil(pairlist_term)) {
         char key_str[AZ_MAX_ATOM_LENGTH] = {0};
         if (! IsCons(pairlist_term)) { return NULL; }
         GetCons(pairlist_term);
@@ -425,13 +431,16 @@ pred P3_azaltjson__term_json(Frame *Env) {
   TERM *ain = PARG(argc, 1);
   TERM *out = PARG(argc, 2);
 
+  char flag_output_codes_key[] = "output_codes";
+  int flag_output_codes = 0;
+
+  size_t flags_json_dumps = JSON_PRESERVE_ORDER | JSON_ENCODE_ANY; // default
+
   // オプション解析
-  if (UnifyAtomE(Env, opt, ATOM_NIL)) {
-    // 何もしない
-  } else if (!IsCons(opt)) {
+  if (!IsNil(opt) && !IsCons(opt)) {
     YIELD(FAIL);
   }
-  while (! IsNil(opt)) {
+  while (!IsNil(opt)) {
     char key_str[AZ_MAX_ATOM_LENGTH] = {0};
     if (! IsCons(opt)) { YIELD(FAIL); }
     GetCons(opt);
@@ -445,7 +454,36 @@ pred P3_azaltjson__term_json(Frame *Env) {
     TERM *val_term = next_var_cell - 1; // 値
 
     Atom2Asciz(GetAtom(key_term), key_str);
-    // 何もしない
+
+    if (strcmp(key_str, flag_output_codes_key) == 0) {
+      // 文字コードフラグ
+      flag_output_codes = unify_atom(val_term, TRUE_ATOM);
+    }
+    else if (strcmp(key_str, "json_indent") == 0) {
+      if (IsInt(val_term)) {
+        flags_json_dumps |= JSON_INDENT(GetInt(val_term));
+      }
+    }
+    else if (strcmp(key_str, "json_compact") == 0) {
+      if (unify_atom(val_term, TRUE_ATOM)) {
+        flags_json_dumps |= JSON_COMPACT;
+      }
+    }
+    else if (strcmp(key_str, "json_sort_keys") == 0) {
+      if (unify_atom(val_term, TRUE_ATOM)) {
+        flags_json_dumps |= JSON_SORT_KEYS;
+      }
+    }
+    else if (strcmp(key_str, "json_escape_slash") == 0) {
+      if (unify_atom(val_term, TRUE_ATOM)) {
+        flags_json_dumps |= JSON_ESCAPE_SLASH;
+      }
+    }
+    else if (strcmp(key_str, "json_real_precision") == 0) {
+      if (IsInt(val_term)) {
+        flags_json_dumps |= JSON_REAL_PRECISION(GetInt(val_term));
+      }
+    }
   }
 
   jv = make_json_value_from_prolog_value(Env, ain);
@@ -454,15 +492,26 @@ pred P3_azaltjson__term_json(Frame *Env) {
     YIELD(FAIL);
   }
 
-  char *s = json_dumps(jv, (JSON_INDENT(0) | JSON_PRESERVE_ORDER));
+  /*
+    Jansson ver2.8
+    - JSON_INDENT(n)          : 改行とn個の空白を使ってインデントすることで、結果を見やすくする
+    - JSON_COMPACT            : コンパクトな表現を可能に
+    - JSON_ENSURE_ASCII       : 出力はASCII文字のみで構成されていることが保証される
+    - JSON_SORT_KEYS          : 出力内のすべてのオブジェクトがキーでソートされる
+    - JSON_PRESERVE_ORDER     : (Deprecated)
+    - JSON_ENCODE_ANY         : 任意のJSON値をエンコード可能
+    - JSON_ESCAPE_SLASH       : 文字列中の/文字をエスケープする
+    - JSON_REAL_PRECISION(n)  : 最大n桁の精度ですべての実数を出力する
+  */
+  char *s = json_dumps(jv, flags_json_dumps);
   if (s == 0) {
     YIELD(FAIL);
   }
 
-  if (0) {
+  if (!flag_output_codes) {
     // string -> アトム
     ret = unify_atom(out, Asciz2Atom(Env, (char* )s));
-    if (!ret) { return ret; }
+    if (!ret) { YIELD(FAIL); }
   } else {
     // string -> 文字コードリスト格納str複合項
     TERM *list_head_term = out;
