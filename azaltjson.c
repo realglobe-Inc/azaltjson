@@ -125,7 +125,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
       for (i = 0; i < strlen(s); i++) {
         MakeUndef(Env);
         TERM *val_term = next_var_cell - 1; // 文字コード
-        r = unify_int(val_term, (SBASEINT)s[i]);
+        r = UnifyIntE(Env, val_term, (unsigned char)s[i]);
         if (!r) { return r; }
 
         MakeUndef(Env);
