@@ -6,8 +6,6 @@
 
 #define PARG(n,i)       (next_var_cell - (n) + (i))
 
-#define DUMP_FLAGS    (JSON_INDENT(0) | JSON_PRESERVE_ORDER)
-
 extern pred P3_azaltjson__json_term(Frame *Env);
 extern pred P3_azaltjson__term_json(Frame *Env);
 
@@ -456,12 +454,39 @@ pred P3_azaltjson__term_json(Frame *Env) {
     YIELD(FAIL);
   }
 
-  char *s = json_dumps(jv, DUMP_FLAGS);
+  char *s = json_dumps(jv, (JSON_INDENT(0) | JSON_PRESERVE_ORDER));
   if (s == 0) {
     YIELD(FAIL);
   }
 
-  ret = unify_atom(out, Asciz2Atom(Env, s));
+  if (0) {
+    // string -> アトム
+    ret = unify_atom(out, Asciz2Atom(Env, (char* )s));
+    if (!ret) { return ret; }
+  } else {
+    // string -> 文字コードリスト格納str複合項
+    TERM *list_head_term = out;
+    TERM *list_tail_term = NULL;
+
+    int i = 0;
+    for (i = 0; i < strlen(s); i++) {
+      MakeUndef(Env);
+      TERM *val_term = next_var_cell - 1; // 文字コード
+      ret = UnifyIntE(Env, val_term, (unsigned char)s[i]);
+      if (!ret) { YIELD(FAIL); }
+
+      MakeUndef(Env);
+      list_tail_term = next_var_cell - 1; // リスト要素
+      ret = UnifyCons(Env, list_head_term, val_term, list_tail_term);
+      if (!ret) { YIELD(FAIL); }
+
+      list_head_term = list_tail_term;
+    }
+    // リスト終端
+    ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+    if (!ret) { YIELD(FAIL); }
+  }
+
   free(s);
   YIELD(ret);
 }
