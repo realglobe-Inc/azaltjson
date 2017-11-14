@@ -238,9 +238,9 @@ pred P3_azaltjson__json_term(Frame *Env) {
   }
 
   r = make_prolog_value_from_json_value(Env, out, jx, flag_atom);
+  json_object_clear(jx);
   if (s != buf) free(s);
   if (r == 0) {
-    json_object_clear(jx);
     fprintf(stderr, "make_prolog_value_from_json_value returns 0\n");
     YIELD(FAIL);
   }
