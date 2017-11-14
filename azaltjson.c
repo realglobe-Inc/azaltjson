@@ -6,24 +6,35 @@
 
 #define PARG(n,i)       (next_var_cell - (n) + (i))
 
-#define AZALTJSON__FUNCTOR_FS  ("fs")
-#define AZALTJSON__FUNCTOR_STR ("str")
+#define DUMP_FLAGS    (JSON_INDENT(0) | JSON_PRESERVE_ORDER)
 
 extern pred P3_azaltjson__json_term(Frame *Env);
+extern pred P3_azaltjson__term_json(Frame *Env);
 
 static BASEINT TRUE_ATOM;
 static BASEINT FALSE_ATOM;
 static BASEINT NULL_ATOM;
+
+static BASEINT FUNCT_FS_ATOM;
+static BASEINT FUNCT_STR_ATOM;
+
+static BASEINT EMPTY_LIST_ATOM;
 
 extern int initiate_plmodule(Frame *Env);
 extern int initiate_azaltjson(Frame *Env) {
   initiate_plmodule(Env); // prologモジュール初期化（plmodule.c内部で定義）
 
   put_bltn("azaltjson__json_term", 3, P3_azaltjson__json_term);
+  put_bltn("azaltjson__term_json", 3, P3_azaltjson__term_json);
 
   TRUE_ATOM  = PutSystemAtom(Env, "true");
   FALSE_ATOM = PutSystemAtom(Env, "false");
   NULL_ATOM  = PutSystemAtom(Env, "null");
+
+  FUNCT_FS_ATOM  = PutSystemAtom(Env, "fs");
+  FUNCT_STR_ATOM = PutSystemAtom(Env, "str");
+
+  EMPTY_LIST_ATOM = PutSystemAtom(Env, "[]");
 
   return 1;
 };
@@ -33,54 +44,56 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv,
 
   switch (json_typeof(jv)) {
   case JSON_OBJECT: {
-      size_t size;
-      const char *key;
-      json_t *value;
+    // オブジェクト
+    size_t size;
+    const char *key;
+    json_t *value;
 
-      size = json_object_size(jv);
+    size = json_object_size(jv);
+    MakeUndef(Env);
+    TERM *prefs_term = next_var_cell - 1;
+    TERM *list_head_term = prefs_term;
+    TERM *list_tail_term = NULL;
+
+    json_object_foreach(jv, key, value) {
       MakeUndef(Env);
-      TERM *prefs_term = next_var_cell - 1;
-      TERM *list_head_term = prefs_term;
-      TERM *list_tail_term = NULL;
-
-      json_object_foreach(jv, key, value) {
-        MakeUndef(Env);
-        TERM *key_term = next_var_cell - 1; // キーアトム
-        ret = unify_atom(key_term, Asciz2Atom(Env, (char *)key));
-        if (!ret) { return ret; }
-
-        MakeUndef(Env);
-        TERM *val_term = next_var_cell - 1; // バリュー
-        ret = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
-        if (!ret) { return ret; }
-
-        MakeUndef(Env);
-        TERM *fs_delimiter_term = next_var_cell - 1; // 区切り記号
-        ret = B2_fs_delimiter(Env, fs_delimiter_term, fs_delimiter_term);
-        if (!ret) { return ret; }
-
-        MakeUndef(Env);
-        TERM *pair_term = next_var_cell - 1; // ペア複合項
-        ret = UnifyCompTerm(Env, pair_term, Asciz2Atom(Env, ":"), 2, key_term, val_term);
-        if (!ret) { return ret; }
-
-        MakeUndef(Env);
-        list_tail_term = next_var_cell - 1; // リスト要素
-        ret = UnifyCons(Env, list_head_term, pair_term, list_tail_term);
-        if (!ret) { return ret; }
-
-        list_head_term = list_tail_term;
-      }
-      // リスト終端
-      ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+      TERM *key_term = next_var_cell - 1; // キーアトム
+      ret = unify_atom(key_term, Asciz2Atom(Env, (char *)key));
       if (!ret) { return ret; }
 
-      // object -> ペアリスト格納fs複合項
-      ret = UnifyCompTerm(Env, term, Asciz2Atom(Env, AZALTJSON__FUNCTOR_FS), 1, prefs_term);
+      MakeUndef(Env);
+      TERM *val_term = next_var_cell - 1; // バリュー
+      ret = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
       if (!ret) { return ret; }
-      break;
+
+      MakeUndef(Env);
+      TERM *fs_delimiter_term = next_var_cell - 1; // 区切り記号
+      ret = B2_fs_delimiter(Env, fs_delimiter_term, fs_delimiter_term);
+      if (!ret) { return ret; }
+
+      MakeUndef(Env);
+      TERM *pair_term = next_var_cell - 1; // ペア複合項
+      ret = UnifyCompTerm(Env, pair_term, Asciz2Atom(Env, ":"), 2, key_term, val_term);
+      if (!ret) { return ret; }
+
+      MakeUndef(Env);
+      list_tail_term = next_var_cell - 1; // リスト要素
+      ret = UnifyCons(Env, list_head_term, pair_term, list_tail_term);
+      if (!ret) { return ret; }
+
+      list_head_term = list_tail_term;
+    }
+    // リスト終端
+    ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+    if (!ret) { return ret; }
+
+    // object -> ペアリスト格納fs複合項
+    ret = UnifyCompTerm(Env, term, FUNCT_FS_ATOM, 1, prefs_term);
+    if (!ret) { return ret; }
+    break;
   }
   case JSON_ARRAY: {
+    // 配列
     int i, len;
     len = (int )json_array_size(jv);
 
@@ -107,6 +120,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv,
     break;
   }
   case JSON_STRING: {
+    // 文字列
     BASEINT a;
     const char *s = json_string_value(jv);
     if (s == 0) return 0;
@@ -139,30 +153,32 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv,
       ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
       if (!ret) { return ret; }
 
-      ret = UnifyCompTerm(Env, term, Asciz2Atom(Env, AZALTJSON__FUNCTOR_STR), 1, codes_term);
+      ret = UnifyCompTerm(Env, term, FUNCT_STR_ATOM, 1, codes_term);
       if (!ret) { return ret; }
     }
     break;
   }
   case JSON_INTEGER: {
+    // 整数
     json_int_t v = json_integer_value(jv);
     ret = unify_int(term, (SBASEINT )v);
     break;
   }
   case JSON_REAL: {
+    // 浮動小数点数
     double v = json_real_value(jv);
     ret = UnifyDouble(Env, term, v);
     break;
   }
-  case JSON_TRUE: {
+  case JSON_TRUE: { // true
     ret = unify_atom(term, TRUE_ATOM);
     break;
   }
-  case JSON_FALSE: {
+  case JSON_FALSE: { // false
     ret = unify_atom(term, FALSE_ATOM);
     break;
   }
-  case JSON_NULL: {
+  case JSON_NULL: { // null
     ret = unify_atom(term, NULL_ATOM);
     break;
   }
@@ -178,7 +194,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
 
   json_t *jx;
   json_error_t error;
-  int len, r;
+  int ret;
   char *s;
   char buf[512];
 
@@ -218,8 +234,8 @@ pred P3_azaltjson__json_term(Frame *Env) {
     }
   }
 
-  len = az_term_to_cstring_length(Env, ain);
-  if (len >= 512) {
+  int len = az_term_to_cstring_length(Env, ain);
+  if (len >= sizeof(buf)) {
     s = malloc(len + 1);
     if (s == 0) YIELD(FAIL);
   }
@@ -238,10 +254,10 @@ pred P3_azaltjson__json_term(Frame *Env) {
     YIELD(FAIL);
   }
 
-  r = make_prolog_value_from_json_value(Env, out, jx, flag_str2comp);
+  ret = make_prolog_value_from_json_value(Env, out, jx, flag_str2comp);
   json_object_clear(jx);
   if (s != buf) free(s);
-  if (r == 0) {
+  if (ret == 0) {
     fprintf(stderr, "make_prolog_value_from_json_value returns 0\n");
     YIELD(FAIL);
   }
@@ -249,3 +265,203 @@ pred P3_azaltjson__json_term(Frame *Env) {
   YIELD(DET_SUCC);
 }
 
+static json_t* make_json_value_from_prolog_value(Frame* Env, TERM* term) {
+  json_t* jv;
+
+  if (IsInt(term)) {
+    // 整数
+    json_int_t val = (json_int_t )GetInt(term);
+    jv = json_integer(val);
+    if (jv == 0) {
+      fprintf(stderr, "json_integer: [%" JSON_INTEGER_FORMAT "]\n", val);
+      return NULL;
+    }
+  } else if (IsDouble(term)) {
+    // 浮動小数点数
+    double val = GetDouble(term);
+    jv = json_real(val);
+    if (jv == 0) {
+      fprintf(stderr, "json_real: [%lf]\n", val);
+      return NULL;
+    }
+  } else if (IsAtom(term)) {
+    // アトム
+    BASEINT atom = INT_BODY(term);
+
+    if        (atom == TRUE_ATOM) { // true
+      jv = json_true();
+    } else if (atom == FALSE_ATOM) { // false
+      jv = json_false();
+    } else if (atom == NULL_ATOM) { // null
+      jv = json_null();
+    } else if (atom == EMPTY_LIST_ATOM) { // []
+      jv = json_array(); // 空リスト（空文字列""とは認識しない）
+    } else {
+      // それ以外のアトム -> 文字列と推測
+      char buf[256];
+      char *s;
+      int len;
+
+      len = az_term_to_cstring_length(Env, term);
+      if (len >= sizeof(buf)) {
+        s = malloc(len + 1);
+        if (s == 0) return NULL;
+      } else {
+        s = buf;
+      }
+
+      (void )az_term_to_cstring(Env, term, s, len + 1);
+      jv = json_string_nocheck(s);
+      if (jv == 0) {
+        fprintf(stderr, "json_string_nocheck: [%s]\n", s);
+        if (s != buf) free(s);
+        return NULL;
+      }
+      if (s != buf) free(s);
+    }
+  } else if (IsCons(term)) {
+    // リスト
+    int ret;
+
+    jv = json_array();
+
+    while (IsCons(term)) {
+      REALVALUE(term);
+      term = BODY(term);
+
+      json_t *ev = make_json_value_from_prolog_value(Env, term);
+      if (ev == NULL) {
+        return NULL;
+      }
+      ret = json_array_append_new(jv, ev);
+      if (ret != 0) {
+        fprintf(stderr, "json_array_append_new() fail.\n");
+        json_decref(jv);
+        return NULL;
+      }
+      term++;
+    }
+  } else if (IsCompTerm(term)) {
+    // 複合項
+    BASEINT functor;
+    GetFunctor(term, &functor);
+
+    if (functor == FUNCT_FS_ATOM) {
+      // 素性構造
+      jv = json_object();
+      if (jv == 0) {
+        return NULL;
+      }
+
+      GetArg(term, 1);
+      TERM *pairlist_term = next_var_cell - 1; // ペアリスト
+
+      while (! IsNil(pairlist_term)) {
+        char key_str[AZ_MAX_ATOM_LENGTH] = {0};
+        if (! IsCons(pairlist_term)) { return NULL; }
+        GetCons(pairlist_term);
+        TERM *elem_term = next_var_cell - 2;
+        pairlist_term   = next_var_cell - 1;
+
+        if (! IsCompTerm(elem_term)) { return NULL; }
+        GetArg(elem_term, 1);
+        TERM *key_term = next_var_cell - 1; // 名前
+        GetArg(elem_term, 2);
+        TERM *val_term = next_var_cell - 1; // 値
+
+        json_t *ev = make_json_value_from_prolog_value(Env, val_term);
+        if (ev == NULL) {
+          return NULL;
+        }
+        Atom2Asciz(GetAtom(key_term), key_str);
+
+        int ret = json_object_set_new(jv, key_str, ev);
+        if (ret != 0) {
+          fprintf(stderr, "json_object_set_new: [%s]\n", key_str);
+          return NULL;
+        }
+      }
+
+    } else if (functor == FUNCT_STR_ATOM) {
+      // 文字列（文字コードリスト形式）
+      GetArg(term, 1);
+      TERM *list_term = next_var_cell - 1; // 文字コードリスト
+
+      char buf[256];
+      char *s;
+
+      int len = az_term_to_cstring_length(Env, list_term);
+      if (len >= sizeof(buf)) {
+        s = malloc(len + 1);
+        if (s == 0) return NULL;
+      } else {
+        s = buf;
+      }
+
+      (void )az_term_to_cstring(Env, list_term, s, len + 1);
+      jv = json_string_nocheck(s);
+      if (jv == 0) {
+        fprintf(stderr, "json_string_nocheck: [%s]\n", s);
+        if (s != buf) free(s);
+        return NULL;
+      }
+      if (s != buf) free(s);
+
+    } else {
+      return NULL;
+    }
+  } else {
+    return NULL;
+  }
+
+  return jv;
+}
+
+pred P3_azaltjson__term_json(Frame *Env) {
+  int argc = 3;
+
+  json_t *jv;
+  int ret;
+
+  TERM *opt = PARG(argc, 0);
+  TERM *ain = PARG(argc, 1);
+  TERM *out = PARG(argc, 2);
+
+  // オプション解析
+  if (UnifyAtomE(Env, opt, ATOM_NIL)) {
+    // 何もしない
+  } else if (!IsCons(opt)) {
+    YIELD(FAIL);
+  }
+  while (! IsNil(opt)) {
+    char key_str[AZ_MAX_ATOM_LENGTH] = {0};
+    if (! IsCons(opt)) { YIELD(FAIL); }
+    GetCons(opt);
+    TERM *elem_term = next_var_cell - 2;
+    opt             = next_var_cell - 1;
+
+    if (! IsCompTerm(elem_term)) { YIELD(FAIL); }
+    GetArg(elem_term, 1);
+    TERM *key_term = next_var_cell - 1; // 名前
+    GetArg(elem_term, 2);
+    TERM *val_term = next_var_cell - 1; // 値
+
+    Atom2Asciz(GetAtom(key_term), key_str);
+    // 何もしない
+  }
+
+  jv = make_json_value_from_prolog_value(Env, ain);
+  if (jv == 0) {
+    fprintf(stderr, "make_json_value_from_prolog_value 0\n");
+    YIELD(FAIL);
+  }
+
+  char *s = json_dumps(jv, DUMP_FLAGS);
+  if (s == 0) {
+    YIELD(FAIL);
+  }
+
+  ret = unify_atom(out, Asciz2Atom(Env, s));
+  free(s);
+  YIELD(ret);
+}
