@@ -9,12 +9,11 @@
 dlib_require(azaltjson),
 INPUT = '{"aa":{"bb":[123,{"cc":"456","10":0.789}]}}',
 atom_codes(INPUT, INPUTC),
-json_term({option2fs:true, str2atom:true}, INPUT, T1),
-json_term({option2fs:true, str2atom:true}, INPUTC, T2),
-json_term({option2fs:false, str2atom:true}, INPUT, T3),
-json_term({option2fs:true, str2atom:false}, INPUT, T4),
-json_term({option2fs:false, str2atom:false}, INPUT, T5),
-json_term(INPUT, T6).
+json_term(INPUT, T1),
+json_term(INPUTC, T2),
+json_term({obj2comp: true}, INPUT, T3),
+json_term({str2comp: true}, INPUT, T4),
+json_term({obj2comp: true, str2comp: true}, INPUT, T5).
 ```
 
 出力例
@@ -25,7 +24,6 @@ T1	= {aa:{bb:[123,{cc:'456','10':0.789}]}},
 T2	= {aa:{bb:[123,{cc:'456','10':0.789}]}},
 T3	= fs([aa:fs([bb:[123,fs([cc:'456','10':0.789])]])]),
 T4	= {aa:{bb:[123,{cc:str([52,53,54]),'10':0.789}]}},
-T5	= fs([aa:fs([bb:[123,fs([cc:str([52,53,54]),'10':0.789])]])]),
-T6	= fs([aa:fs([bb:[123,fs([cc:str([52,53,54]),'10':0.789])]])])
+T5	= fs([aa:fs([bb:[123,fs([cc:str([52,53,54]),'10':0.789])]])])
+yes
 ```
-

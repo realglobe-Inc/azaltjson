@@ -8,9 +8,9 @@ json_term(OPTIONS, INPUT, TERM):-
 	fstructure(OPTIONS),
 	fs_list(OPTIONS, OPTIONS_LIST),
 	azaltjson__json_term(OPTIONS_LIST, INPUT, PRETERM),
-	((OPTIONS = {option2fs: FALG_FS}, nonvar(FALG_FS), FALG_FS = true)->
-	 azaltjson__changeterm(PRETERM, TERM);
-	 PRETERM = TERM).
+	((OPTIONS = {obj2comp: FALG_FS}, nonvar(FALG_FS), FALG_FS = true)->
+	 PRETERM = TERM;
+	 azaltjson__changeterm(PRETERM, TERM)).
 
 % 非公開API
 azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- !,

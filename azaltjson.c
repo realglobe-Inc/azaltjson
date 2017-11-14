@@ -28,7 +28,7 @@ extern int initiate_azaltjson(Frame *Env) {
   return 1;
 };
 
-static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, int flag_atom) {
+static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, int flag_str2comp) {
   int r = 1;
 
   switch (json_typeof(jv)) {
@@ -51,7 +51,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
 
         MakeUndef(Env);
         TERM *val_term = next_var_cell - 1; // バリュー
-        r = make_prolog_value_from_json_value(Env, val_term, value, flag_atom);
+        r = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
         if (!r) { return r; }
 
         MakeUndef(Env);
@@ -92,7 +92,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
 
       MakeUndef(Env);
       TERM *val_term = next_var_cell - 1;
-      r = make_prolog_value_from_json_value(Env, val_term, ev, flag_atom);
+      r = make_prolog_value_from_json_value(Env, val_term, ev, flag_str2comp);
       if (!r) { return r; }
 
       MakeUndef(Env);
@@ -110,7 +110,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
     BASEINT a;
     const char *s = json_string_value(jv);
     if (s == 0) return 0;
-    if (flag_atom) {
+    if (!flag_str2comp) {
       // string -> アトム
       r = unify_atom(t, Asciz2Atom(Env, (char* )s));
       if (!r) { return r; }
@@ -185,8 +185,8 @@ pred P3_azaltjson__json_term(Frame *Env) {
   TERM *ain = PARG(argc, 1);
   TERM *out = PARG(argc, 2);
 
-  int flag_atom = 0;
-  char flag_atom_key[] = "str2atom";
+  int flag_str2comp = 0;
+  char flag_str2comp_key[] = "str2comp";
 
   // オプション解析
   if (UnifyAtomE(Env, opt, ATOM_NIL)) {
@@ -208,9 +208,9 @@ pred P3_azaltjson__json_term(Frame *Env) {
     TERM *val_term = next_var_cell - 1; // 値
 
     Atom2Asciz(GetAtom(key_term), key_str);
-    if (strcmp(key_str, flag_atom_key) == 0) {
+    if (strcmp(key_str, flag_str2comp_key) == 0) {
       // アトムフラグ
-      flag_atom = unify_atom(val_term, TRUE_ATOM);
+      flag_str2comp = unify_atom(val_term, TRUE_ATOM);
     } else {
       // 未知のオプションキー
       // 何もしない
@@ -237,7 +237,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
     YIELD(FAIL);
   }
 
-  r = make_prolog_value_from_json_value(Env, out, jx, flag_atom);
+  r = make_prolog_value_from_json_value(Env, out, jx, flag_str2comp);
   json_object_clear(jx);
   if (s != buf) free(s);
   if (r == 0) {
