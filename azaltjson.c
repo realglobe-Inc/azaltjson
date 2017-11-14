@@ -28,8 +28,8 @@ extern int initiate_azaltjson(Frame *Env) {
   return 1;
 };
 
-static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, int flag_str2comp) {
-  int r = 1;
+static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
+  int ret = 1;
 
   switch (json_typeof(jv)) {
   case JSON_OBJECT: {
@@ -46,45 +46,45 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
       json_object_foreach(jv, key, value) {
         MakeUndef(Env);
         TERM *key_term = next_var_cell - 1; // キーアトム
-        r = unify_atom(key_term, Asciz2Atom(Env, (char *)key));
-        if (!r) { return r; }
+        ret = unify_atom(key_term, Asciz2Atom(Env, (char *)key));
+        if (!ret) { return ret; }
 
         MakeUndef(Env);
         TERM *val_term = next_var_cell - 1; // バリュー
-        r = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
-        if (!r) { return r; }
+        ret = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
+        if (!ret) { return ret; }
 
         MakeUndef(Env);
         TERM *fs_delimiter_term = next_var_cell - 1; // 区切り記号
-        r = B2_fs_delimiter(Env, fs_delimiter_term, fs_delimiter_term);
-        if (!r) { return r; }
+        ret = B2_fs_delimiter(Env, fs_delimiter_term, fs_delimiter_term);
+        if (!ret) { return ret; }
 
         MakeUndef(Env);
         TERM *pair_term = next_var_cell - 1; // ペア複合項
-        r = UnifyCompTerm(Env, pair_term, Asciz2Atom(Env, ":"), 2, key_term, val_term);
-        if (!r) { return r; }
+        ret = UnifyCompTerm(Env, pair_term, Asciz2Atom(Env, ":"), 2, key_term, val_term);
+        if (!ret) { return ret; }
 
         MakeUndef(Env);
         list_tail_term = next_var_cell - 1; // リスト要素
-        r = UnifyCons(Env, list_head_term, pair_term, list_tail_term);
-        if (!r) { return r; }
+        ret = UnifyCons(Env, list_head_term, pair_term, list_tail_term);
+        if (!ret) { return ret; }
 
         list_head_term = list_tail_term;
       }
       // リスト終端
-      r = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
-      if (!r) { return r; }
+      ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+      if (!ret) { return ret; }
 
       // object -> ペアリスト格納fs複合項
-      r = UnifyCompTerm(Env, t, Asciz2Atom(Env, AZALTJSON__FUNCTOR_FS), 1, prefs_term);
-      if (!r) { return r; }
+      ret = UnifyCompTerm(Env, term, Asciz2Atom(Env, AZALTJSON__FUNCTOR_FS), 1, prefs_term);
+      if (!ret) { return ret; }
       break;
   }
   case JSON_ARRAY: {
     int i, len;
     len = (int )json_array_size(jv);
 
-    TERM *list_head_term = t;
+    TERM *list_head_term = term;
     TERM *list_tail_term = NULL;
 
     for (i = 0; i < len; i++) {
@@ -92,18 +92,18 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
 
       MakeUndef(Env);
       TERM *val_term = next_var_cell - 1;
-      r = make_prolog_value_from_json_value(Env, val_term, ev, flag_str2comp);
-      if (!r) { return r; }
+      ret = make_prolog_value_from_json_value(Env, val_term, ev, flag_str2comp);
+      if (!ret) { return ret; }
 
       MakeUndef(Env);
       list_tail_term = next_var_cell - 1; // リスト要素
-      r = UnifyCons(Env, list_head_term, val_term, list_tail_term);
-      if (!r) { return r; }
+      ret = UnifyCons(Env, list_head_term, val_term, list_tail_term);
+      if (!ret) { return ret; }
 
       list_head_term = list_tail_term;
     }
     // リスト終端
-    r = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+    ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
     break;
   }
   case JSON_STRING: {
@@ -112,8 +112,8 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
     if (s == 0) return 0;
     if (!flag_str2comp) {
       // string -> アトム
-      r = unify_atom(t, Asciz2Atom(Env, (char* )s));
-      if (!r) { return r; }
+      ret = unify_atom(term, Asciz2Atom(Env, (char* )s));
+      if (!ret) { return ret; }
     } else {
       // string -> 文字コードリスト格納str複合項
       MakeUndef(Env);
@@ -125,51 +125,52 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
       for (i = 0; i < strlen(s); i++) {
         MakeUndef(Env);
         TERM *val_term = next_var_cell - 1; // 文字コード
-        r = UnifyIntE(Env, val_term, (unsigned char)s[i]);
-        if (!r) { return r; }
+        ret = UnifyIntE(Env, val_term, (unsigned char)s[i]);
+        if (!ret) { return ret; }
 
         MakeUndef(Env);
         list_tail_term = next_var_cell - 1; // リスト要素
-        r = UnifyCons(Env, list_head_term, val_term, list_tail_term);
-        if (!r) { return r; }
+        ret = UnifyCons(Env, list_head_term, val_term, list_tail_term);
+        if (!ret) { return ret; }
 
         list_head_term = list_tail_term;
       }
       // リスト終端
-      r = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
-      if (!r) { return r; }
+      ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+      if (!ret) { return ret; }
 
-      r = UnifyCompTerm(Env, t, Asciz2Atom(Env, AZALTJSON__FUNCTOR_STR), 1, codes_term);
-      if (!r) { return r; }
+      ret = UnifyCompTerm(Env, term, Asciz2Atom(Env, AZALTJSON__FUNCTOR_STR), 1, codes_term);
+      if (!ret) { return ret; }
     }
     break;
   }
   case JSON_INTEGER: {
     json_int_t v = json_integer_value(jv);
-    r = unify_int(t, (SBASEINT )v);
+    ret = unify_int(term, (SBASEINT )v);
     break;
   }
   case JSON_REAL: {
     double v = json_real_value(jv);
-    r = UnifyDouble(Env, t, v);
+    ret = UnifyDouble(Env, term, v);
     break;
   }
   case JSON_TRUE: {
-    r = unify_atom(t, TRUE_ATOM);
+    ret = unify_atom(term, TRUE_ATOM);
     break;
   }
   case JSON_FALSE: {
-    r = unify_atom(t, FALSE_ATOM);
+    ret = unify_atom(term, FALSE_ATOM);
     break;
   }
   case JSON_NULL: {
-    r = unify_atom(t, NULL_ATOM);
+    ret = unify_atom(term, NULL_ATOM);
     break;
   }
   default:
     fprintf(stderr, "unrecognized JSON type %d\n", json_typeof(jv));
+    return 0;
   }
-  return r;
+  return ret;
 }
 
 pred P3_azaltjson__json_term(Frame *Env) {
