@@ -8,132 +8,18 @@
 
 #define AZALTJSON__FUNCTOR_FS  ("fs")
 #define AZALTJSON__FUNCTOR_STR ("str")
-#define AZALTJSON__CALL        ("azaltjson__makefs")
-
-/* ---------- AZ-Prolog 文字列to節 コーディング ここから ---------- */
-// #define BACKWARD_COMPAT
-
-static int
-string_to_term(Frame* Env, TERM* t, char* s)
-{
-#ifdef BACKWARD_COMPAT
-  AZ_EXTERN struct _Stream* bufferstream;
-  AZ_EXTERN TERM* gvar_top;
-
-  AZ_EXTERN void Stream_ClearUngetBuff(struct _Stream *stream);
-  AZ_EXTERN void Stream_ResetBuffer(struct _Stream *stream);
-  AZ_EXTERN int  Stream_buf_put(int c, struct _Stream *s);
-  AZ_EXTERN int  Read_ReadGeneric(Frame *Env, struct _Stream *stream);
-#endif
-
-  char* p;
-  char* end;
-  TERM *sv, *unifyp;
-  int r;
-#ifndef BACKWARD_COMPAT
-  int v;
-#endif
-
-  end = s + strlen(s);
-
-  Stream_ClearUngetBuff(bufferstream);
-  Stream_ResetBuffer(bufferstream);
-
-  p = s;
-  while (p < end) {
-    Stream_buf_put((int )*p, bufferstream);
-
-    p++;
-  }
-
-  Stream_buf_put(' ', bufferstream);
-  Stream_buf_put('.', bufferstream);
-  Stream_buf_put(0,   bufferstream);
-  Stream_ResetBuffer(bufferstream);
-
-  PUSH_STACK(t);
-  sv = next_var_cell;
-#ifdef BACKWARD_COMPAT
-  r = Read_ReadGeneric(Env, bufferstream);
-#else
-  r = Read_ReadGeneric(Env, bufferstream, &v);
-#endif
-  if (r == 1) {
-    unifyp = next_var_cell - 1;
-    next_var_cell = sv;
-    POP_STACK(t);
-    r = unifyE_ex(Env, t, unifyp);
-    if (r != 0) return 0;
-    return -1;
-  }
-  next_var_cell = sv - 1;
-
-  return 1;
-}
-
-/* ---------- AZ-Prolog 文字列to節 コーディング ここまで ---------- */
-
-/* ---------- AZ-Prolog コールバック コーディング ここから ---------- */
-#define ATOM_COMMA		(ATOM_NIL+7)
-#define ATOM_CUT		(ATOM_NIL+4)
-
-#define PUTTERM(ari,body,t)		SETTAG(t,term_tag); NO(t)=ari; BODY(t)=body
-
-#define   CALL_BACK_ATOM_BEGIN(env,fname)                   \
-  { TERM *gcell;                                            \
-    env.Link=CallbackEnv;                                   \
-    LINK1(((Frame*)&env),3,3);                              \
-    gcell=env.Global;                                       \
-    PUTTERM(2,gcell,next_var_cell);                         \
-    next_var_cell++ ;                                       \
-    PUTATOM(ATOM_COMMA,gcell);                              \
-    PUTATOM(fname,     gcell+1);                            \
-    PUTATOM(ATOM_CUT,  gcell+2); }
-
-#define  CALL_BACK_CALL(env,getcell)                                    \
-  { register pred result;                                               \
-    int      ret_status=0;                                              \
-    TERM *my_local = next_var_cell-1;                                   \
-    CALL_CDET(P1_call, &env, result, ret_status = -1 );                 \
-    env.Global -= (getcell+4);                                          \
-    env.Local  = my_local;                                              \
-    env.nVars  =  0;                                                    \
-    RELINKZ(((Frame*)&env));                                            \
-    return ret_status; }
-
-/* ***************************** */
-
-static Frame* CallbackEnv;
-
-static int
-azros_callback(BASEINT callback_name)
-{
-  Frame Now       = {0};
-
-  CALL_BACK_ATOM_BEGIN(Now,callback_name);
-  CALL_BACK_CALL(Now,-1);
-}
-
-/* ---------- AZ-Prolog コールバック コーディング ここまで ---------- */
 
 extern pred P3_azaltjson__json_term(Frame *Env);
-extern pred P1_azaltjson__get_prefs(Frame *Env); // 非公開API
-extern pred P1_azaltjson__set_fs(Frame *Env);    // 非公開API
 
 static BASEINT TRUE_ATOM;
 static BASEINT FALSE_ATOM;
 static BASEINT NULL_ATOM;
-
-static TERM *global_prefs_term = NULL;
-static char global_fs_term_str[AZ_MAX_ATOM_LENGTH] = {0};
 
 extern int initiate_plmodule(Frame *Env);
 extern int initiate_azaltjson(Frame *Env) {
   initiate_plmodule(Env); // prologモジュール初期化（plmodule.c内部で定義）
 
   put_bltn("azaltjson__json_term", 3, P3_azaltjson__json_term);
-  put_bltn("azaltjson__get_prefs", 1, P1_azaltjson__get_prefs);
-  put_bltn("azaltjson__set_fs",    1, P1_azaltjson__set_fs);
 
   TRUE_ATOM  = PutSystemAtom(Env, "true");
   FALSE_ATOM = PutSystemAtom(Env, "false");
@@ -142,8 +28,8 @@ extern int initiate_azaltjson(Frame *Env) {
   return 1;
 };
 
-static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, int flag_fs, int flag_atom) {
-  int r;
+static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, int flag_atom) {
+  int r = 1;
 
   switch (json_typeof(jv)) {
   case JSON_OBJECT: {
@@ -165,7 +51,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
 
         MakeUndef(Env);
         TERM *val_term = next_var_cell - 1; // バリュー
-        r = make_prolog_value_from_json_value(Env, val_term, value, flag_fs, flag_atom);
+        r = make_prolog_value_from_json_value(Env, val_term, value, flag_atom);
         if (!r) { return r; }
 
         MakeUndef(Env);
@@ -189,29 +75,9 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
       r = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
       if (!r) { return r; }
 
-      if (!flag_fs) {
-        // object -> ペアリスト格納fs複合項
-        r = UnifyCompTerm(Env, t, Asciz2Atom(Env, AZALTJSON__FUNCTOR_FS), 1, prefs_term);
-        if (!r) { return r; }
-      } else {
-        // object -> 素性構造
-        global_prefs_term = prefs_term;
-
-        LINK0(Env);
-        LINK1ZZ(Env);
-        CallbackEnv = Env;
-        int ret = azros_callback(Asciz2Atom(Env, AZALTJSON__CALL));
-        if (ret != 0) { return 0; }
-
-        int backup_kanji = kanji;
-        kanji = 0;
-        r = string_to_term(Env, t, global_fs_term_str);
-        kanji = backup_kanji;
-        if (r == 1) { // syntax error
-          return 0;
-        }
-        r = 1; // 正常終了
-      }
+      // object -> ペアリスト格納fs複合項
+      r = UnifyCompTerm(Env, t, Asciz2Atom(Env, AZALTJSON__FUNCTOR_FS), 1, prefs_term);
+      if (!r) { return r; }
       break;
   }
   case JSON_ARRAY: {
@@ -226,7 +92,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* t, json_t* jv, in
 
       MakeUndef(Env);
       TERM *val_term = next_var_cell - 1;
-      r = make_prolog_value_from_json_value(Env, val_term, ev, flag_fs, flag_atom);
+      r = make_prolog_value_from_json_value(Env, val_term, ev, flag_atom);
       if (!r) { return r; }
 
       MakeUndef(Env);
@@ -319,9 +185,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
   TERM *ain = PARG(argc, 1);
   TERM *out = PARG(argc, 2);
 
-  int flag_fs = 0;
   int flag_atom = 0;
-  char flag_fs_key[] = "option2fs";
   char flag_atom_key[] = "str2atom";
 
   // オプション解析
@@ -344,15 +208,12 @@ pred P3_azaltjson__json_term(Frame *Env) {
     TERM *val_term = next_var_cell - 1; // 値
 
     Atom2Asciz(GetAtom(key_term), key_str);
-    if        (strcmp(key_str, flag_fs_key) == 0) {
-      // 素性構造フラグ
-      flag_fs = unify_atom(val_term, TRUE_ATOM);
-    } else if (strcmp(key_str, flag_atom_key) == 0) {
+    if (strcmp(key_str, flag_atom_key) == 0) {
       // アトムフラグ
       flag_atom = unify_atom(val_term, TRUE_ATOM);
     } else {
       // 未知のオプションキー
-      YIELD(FAIL);
+      // 何もしない
     }
   }
 
@@ -376,7 +237,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
     YIELD(FAIL);
   }
 
-  r = make_prolog_value_from_json_value(Env, out, jx, flag_fs, flag_atom);
+  r = make_prolog_value_from_json_value(Env, out, jx, flag_atom);
   if (s != buf) free(s);
   if (r == 0) {
     json_object_clear(jx);
@@ -384,27 +245,6 @@ pred P3_azaltjson__json_term(Frame *Env) {
     YIELD(FAIL);
   }
 
-  YIELD(DET_SUCC);
-}
-
-pred P1_azaltjson__get_prefs(Frame *Env) {
-  int argc = 1;
-  TERM *term = PARG(argc, 0);
-
-  if (!UnifyE(Env, global_prefs_term, term)) {
-    YIELD(FAIL);
-  }
-  YIELD(DET_SUCC);
-}
-
-pred P1_azaltjson__set_fs(Frame *Env) {
-  int argc = 1;
-  TERM *term = PARG(argc, 0);
-
-  int backup_kanji = kanji;
-  kanji = 0;
-  strncpy(global_fs_term_str, az_term_conv_to_string(Env, term), AZ_MAX_ATOM_LENGTH - 1);
-  kanji = backup_kanji;
   YIELD(DET_SUCC);
 }
 
