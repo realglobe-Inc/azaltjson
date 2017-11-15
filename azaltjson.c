@@ -259,7 +259,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
   }
 
   ret = make_prolog_value_from_json_value(Env, out, jx, flag_str2comp);
-  json_object_clear(jx);
+  json_decref(jx);
   if (s != buf) free(s);
   if (ret == 0) {
     fprintf(stderr, "make_prolog_value_from_json_value returns 0\n");
@@ -504,6 +504,7 @@ pred P3_azaltjson__term_json(Frame *Env) {
     - JSON_REAL_PRECISION(n)  : 最大n桁の精度ですべての実数を出力する
   */
   char *s = json_dumps(jv, flags_json_dumps);
+  json_decref(jv);
   if (s == 0) {
     YIELD(FAIL);
   }
