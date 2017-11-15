@@ -8,7 +8,7 @@ json_term(OPTIONS, INPUT, TERM):-
 	fstructure(OPTIONS),
 	fs_list(OPTIONS, OPTIONS_LIST),
 	azaltjson__json_term(OPTIONS_LIST, INPUT, PRETERM),
-	((OPTIONS = {obj2comp: FALG_FS}, nonvar(FALG_FS), FALG_FS = true)->
+	((OPTIONS = {obj2comp: FLAG_FS}, nonvar(FLAG_FS), FLAG_FS = true)->
 	 PRETERM = TERM;
 	 azaltjson__changeterm(PRETERM, TERM)).
 
@@ -20,7 +20,9 @@ term_json(INPUT, TERM):-
 term_json(OPTIONS, INPUT, TERM):-
 	fstructure(OPTIONS),
 	fs_list(OPTIONS, OPTIONS_LIST),
-	azaltjson__sanitize_term(INPUT, SANINPUT),
+	((OPTIONS = {without_fs: FLAG_WOFS}, nonvar(FLAG_WOFS), FLAG_WOFS = true)->
+	 SANINPUT = INPUT;
+	 azaltjson__sanitize_term(INPUT, SANINPUT)),
 	azaltjson__term_json(OPTIONS_LIST, SANINPUT, TERM).
 
 
