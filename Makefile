@@ -3,8 +3,10 @@
 NAME = azaltjson
 DATE_TAG:=`date +%Y%m%d`
 
-CCOPT = $(PCCOPT) `pkg-config --cflags glib-2.0` -I$(AZProlog)/include
-LDOPT = $(PLDOPT) -L$(AZProlog)/lib -lazp
+LIBJANSSON = jansson
+
+CCOPT = $(PCCOPT) `pkg-config --cflags glib-2.0` -I./$(LIBJANSSON)/src -I$(AZProlog)/include
+LDOPT = $(PLDOPT) -L./$(LIBJANSSON)/src/.libs -L$(AZProlog)/lib -lazp
 
 #CFLAGS = -Wall -O2 $(CCOPT)
 #CFLAGS = -O2 $(CCOPT)
@@ -44,3 +46,6 @@ clean:
 
 install:
 	cp -p azaltjson.so $(AZProlog)/lib/azprolog/ext/.
+
+install_libjansson:
+	cp -Rp $(LIBJANSSON)/src/.libs/libjansson.so* $(AZProlog)/lib/.
