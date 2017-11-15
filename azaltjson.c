@@ -37,7 +37,7 @@ extern int initiate_azaltjson(Frame *Env) {
   return 1;
 };
 
-static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
+static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
   int ret = 1;
 
   switch (json_typeof(jv)) {
@@ -61,7 +61,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv,
 
       MakeUndef(Env);
       TERM *val_term = next_var_cell - 1; // バリュー
-      ret = make_prolog_value_from_json_value(Env, val_term, value, flag_str2comp);
+      ret = json2term(Env, val_term, value, flag_str2comp);
       if (!ret) { return ret; }
 
       MakeUndef(Env);
@@ -103,7 +103,7 @@ static int make_prolog_value_from_json_value(Frame* Env, TERM* term, json_t* jv,
 
       MakeUndef(Env);
       TERM *val_term = next_var_cell - 1;
-      ret = make_prolog_value_from_json_value(Env, val_term, ev, flag_str2comp);
+      ret = json2term(Env, val_term, ev, flag_str2comp);
       if (!ret) { return ret; }
 
       MakeUndef(Env);
@@ -258,18 +258,18 @@ pred P3_azaltjson__json_term(Frame *Env) {
     YIELD(FAIL);
   }
 
-  ret = make_prolog_value_from_json_value(Env, out, jx, flag_str2comp);
+  ret = json2term(Env, out, jx, flag_str2comp);
   json_decref(jx);
   if (s != buf) free(s);
   if (ret == 0) {
-    fprintf(stderr, "make_prolog_value_from_json_value returns 0\n");
+    fprintf(stderr, "json2term returns 0\n");
     YIELD(FAIL);
   }
 
   YIELD(DET_SUCC);
 }
 
-static json_t* make_json_value_from_prolog_value(Frame* Env, TERM* term) {
+static json_t* term2json(Frame* Env, TERM* term) {
   json_t* jv;
 
   if (IsInt(term)) {
@@ -333,7 +333,7 @@ static json_t* make_json_value_from_prolog_value(Frame* Env, TERM* term) {
       REALVALUE(term);
       term = BODY(term);
 
-      json_t *ev = make_json_value_from_prolog_value(Env, term);
+      json_t *ev = term2json(Env, term);
       if (ev == NULL) {
         return NULL;
       }
@@ -373,7 +373,7 @@ static json_t* make_json_value_from_prolog_value(Frame* Env, TERM* term) {
         GetArg(elem_term, 2);
         TERM *val_term = next_var_cell - 1; // 値
 
-        json_t *ev = make_json_value_from_prolog_value(Env, val_term);
+        json_t *ev = term2json(Env, val_term);
         if (ev == NULL) {
           return NULL;
         }
@@ -486,9 +486,9 @@ pred P3_azaltjson__term_json(Frame *Env) {
     }
   }
 
-  jv = make_json_value_from_prolog_value(Env, ain);
+  jv = term2json(Env, ain);
   if (jv == 0) {
-    fprintf(stderr, "make_json_value_from_prolog_value 0\n");
+    fprintf(stderr, "term2json returns 0\n");
     YIELD(FAIL);
   }
 
