@@ -63,9 +63,15 @@ API
 
 ## json_term(+JSON, -TERM)
 
-`json_term({}, +JSON, -TERM)` と同等（省略形）
+`json_term({}, JSON, TERM)` と同等（省略形）
 
 ## json_term(+OPTIONS, +JSON, -TERM)
+
+JSON文字列をProlog節へ変換する。
+
+- OPTIONS: オプション指定
+- JSON: JSON文字列（アトムまたは文字コードリスト）
+- TERM: Prolog節
 
 OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 
@@ -80,6 +86,12 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 
 ## term_json(+OPTIONS, +TERM, -JSON)
 
+Prolog節をJSON文字列へ変換する。
+
+- OPTIONS: オプション指定
+- TERM: Prolog節
+- JSON: JSON文字列（アトムまたは文字コードリスト）
+
 OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 なお、json_で始まる項目のデフォルト値はJanssonの仕様に従う。
 
@@ -89,5 +101,5 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 | json_indent         | 数値（0以上）  | 0     | 1以上を指定した場合、改行と指定個数の半角スペースを使って結果を見やすくインデント（字下げ）する。<br/>0を指定した場合は改行およびインデントを行わない。 |
 | json_compact        | true / false | false | trueを指定した場合、JSON表現をコンパクトにする。 |
 | json_sort_keys      | true / false | false | trueを指定した場合、オブジェクト内の要素をキーでソートする。 |
-| json_escape_slash   | true / false | false | trueを指定した場合、スラッシュ記号をエスケープする。 |
+| json_escape_slash   | true / false | false | trueを指定した場合、スラッシュ記号 `/` をエスケープ `\/` する。 |
 | json_real_precision | 数値（0以上）  | 17    | 最大で指定桁数の精度で浮動小数点数（整数以外の実数）を出力する。 |
