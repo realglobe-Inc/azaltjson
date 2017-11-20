@@ -103,3 +103,65 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 | json_sort_keys      | true / false | false | trueを指定した場合、オブジェクト内の要素をキーでソートする。 |
 | json_escape_slash   | true / false | false | trueを指定した場合、スラッシュ記号 `/` をエスケープ `\/` する。 |
 | json_real_precision | 数値（0以上）  | 17    | 最大で指定桁数の精度で浮動小数点数（整数以外の実数）を出力する。 |
+
+
+azjsonとの比較
+==============
+
+読み込み
+--------
+
+azjson
+```
+| ?-
+| json_parse('{"aa":{"bb":[123,{"cc":"456","10":0.789}]}}', T0),
+| json_get_attribute(T0, aa, T1),
+| json_get_attribute(T1, bb, [V0, T2]),
+| json_get_attribute(T2, cc, V1),
+| json_get_attribute(T2, '10', V2),
+| json_free_object(T0).
+T0	= '$JSON$'(11171440),
+T1	= '$JSON$'(11171680),
+V0	= 123,
+T2	= '$JSON$'(11172064),
+V1	= '456',
+V2	= 0.789
+```
+
+azaltjson
+```
+| ?-
+| json_term('{"aa":{"bb":[123,{"cc":"456","10":0.789}]}}', {aa:{bb:[V0,{cc:V1,'10':V2}]}}).
+V0	= 123,
+V1	= '456',
+V2	= 0.789
+```
+
+書き込み
+--------
+
+azjson
+```
+| ?-
+| json_make_object(T2),
+| json_set_attribute(T2, cc, '456'),
+| json_set_attribute(T2, '10', 0.789),
+| json_make_object(T1),
+| json_set_attribute(T1, bb, [123, T2]),
+| json_make_object(T0),
+| json_set_attribute(T0, aa, T1),
+| json_object_to_atom(T0, A),
+| json_free_object(T0).
+T2	= '$JSON$'(11171440),
+T1	= '$JSON$'(11171680),
+T0	= '$JSON$'(11172064),
+A	= '{"aa": {"bb": [123, {"cc": "456", "10": 0.78900000000000003}]}}'
+```
+
+azaltjson
+```
+| ?-
+| term_json({aa:{bb:[123,{cc:'456','10':0.789}]}}, A).
+A	= '{"aa": {"bb": [123, {"cc": "456", "10": 0.78900000000000003}]}}'
+```
+
