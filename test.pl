@@ -20,6 +20,7 @@ test(T, M):- errorset(T, R), !, write('test    ['), write(R), write(']: '), writ
 	test((errorset(json_term(2, _), 9), !, nl), '数値型はparseエラーになること'),
 	test((errorset(json_term([a], _), 9), !, nl), 'アトムを含むリスト型はparseエラーになること'),
 	test((errorset(term_json(_, _), 9), !, nl), '変数はstringifyエラーになること'),
+	test((errorset(term_json([1, 2, _, 3], _), 9), !, nl), '変数を含むリストはstringifyエラーになること'),
 	test((errorset(term_json(aa(2), _), 9), !, nl), '複合項はstringifyエラーになること'),
 	test(check('123', 123), '数値のみ'),
 	test(check("123", 123), '数値のみ'),
