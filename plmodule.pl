@@ -27,7 +27,7 @@ term_json(OPTIONS, INPUT, TERM):-
 
 
 % 非公開API
-azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- !,
+azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- nonver(PRETERM), !,
 	% リスト
 	azaltjson__changeterm(PRETERM, TERM),
 	azaltjson__changeterm(PRETERM残り, TERM残り).
@@ -43,7 +43,7 @@ azaltjson__changeterm(TERM, TERM). % それ以外
 
 
 % 非公開API
-azaltjson__sanitize_term([TERM | TERM残り], [SANTERM | SANTERM残り]):- !,
+azaltjson__sanitize_term([TERM | TERM残り], [SANTERM | SANTERM残り]):- nonver(TERM), !,
 	% リスト
 	azaltjson__sanitize_term(TERM, SANTERM),
 	azaltjson__sanitize_term(TERM残り, SANTERM残り).
