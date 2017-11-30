@@ -49,3 +49,6 @@ install:
 
 install_libjansson:
 	cp -Rp $(LIBJANSSON)/src/.libs/libjansson.so* $(AZProlog)/lib/.
+
+test:
+	echo "?-halt." | prolog_c -c test.pl | grep "^test "

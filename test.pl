@@ -36,5 +36,3 @@ test(T, M):- errorset(T, R), !, write('test    ['), write(R), write(']: '), writ
 		       [{cccc:bbbb},123,[],{},[{foo:22},1.23,{}],aaaaa]),
 	     '複合リスト'),
 	write('----- test end -----'), nl.
-
-% make -B && make install && echo "?-halt." | prolog_c -c test.pl | grep "^test "
