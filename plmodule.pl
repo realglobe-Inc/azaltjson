@@ -27,7 +27,7 @@ term_json(OPTIONS, INPUT, TERM):-
 
 
 % 非公開API
-azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- nonver(PRETERM), !,
+azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- !,
 	% リスト
 	azaltjson__changeterm(PRETERM, TERM),
 	azaltjson__changeterm(PRETERM残り, TERM残り).

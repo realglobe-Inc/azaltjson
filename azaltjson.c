@@ -5,6 +5,7 @@
 #include <jansson.h>
 
 #define PARG(n,i)       (next_var_cell - (n) + (i))
+#define ILL_ARG  9
 
 extern pred P3_azaltjson__json_term(Frame *Env);
 extern pred P3_azaltjson__term_json(Frame *Env);
@@ -51,7 +52,7 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
     MakeUndef(Env);
     TERM *prefs_term = next_var_cell - 1;
     TERM *list_head_term = prefs_term;
-    TERM *list_tail_term = NULL;
+    TERM *list_tail_term = prefs_term;
 
     json_object_foreach(jv, key, value) {
       MakeUndef(Env);
@@ -96,7 +97,7 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
     len = (int )json_array_size(jv);
 
     TERM *list_head_term = term;
-    TERM *list_tail_term = NULL;
+    TERM *list_tail_term = term;
 
     for (i = 0; i < len; i++) {
       json_t *ev = json_array_get(jv, (size_t )i);
@@ -131,7 +132,7 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
       MakeUndef(Env);
       TERM *codes_term = next_var_cell - 1;
       TERM *list_head_term = codes_term;
-      TERM *list_tail_term = NULL;
+      TERM *list_tail_term = codes_term;
 
       int i = 0;
       for (i = 0; i < strlen(s); i++) {
@@ -240,6 +241,7 @@ pred P3_azaltjson__json_term(Frame *Env) {
   }
 
   (void )az_term_to_cstring(Env, ain, s, len + 1);
+  // printf("[ %s ]\n", s);
 
   /*
     Jansson ver2.8
@@ -488,8 +490,8 @@ pred P3_azaltjson__term_json(Frame *Env) {
 
   jv = term2json(Env, ain);
   if (jv == 0) {
-    fprintf(stderr, "term2json returns 0\n");
-    YIELD(FAIL);
+    // fprintf(stderr, "term2json returns 0\n");
+    AZ_ERROR(ILL_ARG);
   }
 
   /*
@@ -516,7 +518,7 @@ pred P3_azaltjson__term_json(Frame *Env) {
   } else {
     // string -> 文字コードリスト格納str複合項
     TERM *list_head_term = out;
-    TERM *list_tail_term = NULL;
+    TERM *list_tail_term = out;
 
     int i = 0;
     for (i = 0; i < strlen(s); i++) {
