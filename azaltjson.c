@@ -6,7 +6,7 @@
 
 #define PARG(n,i)       (next_var_cell - (n) + (i))
 #define ILL_ARG  9
-
+#define EMPTY_LIST ("[]")
 extern pred P3_azaltjson__json_term(Frame *Env);
 extern pred P3_azaltjson__term_json(Frame *Env);
 
@@ -33,7 +33,7 @@ extern int initiate_azaltjson(Frame *Env) {
   FUNCT_FS_ATOM  = PutSystemAtom(Env, "fs");
   FUNCT_STR_ATOM = PutSystemAtom(Env, "str");
 
-  EMPTY_LIST_ATOM = PutSystemAtom(Env, "[]");
+  EMPTY_LIST_ATOM = PutSystemAtom(Env, EMPTY_LIST);
 
   return 1;
 };
@@ -199,7 +199,9 @@ pred P3_azaltjson__json_term(Frame *Env) {
   TERM *out = PARG(argc, 2);
 
   int flag_str2comp = 0;
+  int flag_emptylist = 0;
   char flag_str2comp_key[] = "str2comp";
+  char flag_emptylist_key[] = "emptylist";
 
   // オプション解析
   if (!IsNil(opt) && !IsCons(opt)) {
@@ -222,10 +224,17 @@ pred P3_azaltjson__json_term(Frame *Env) {
     if (strcmp(key_str, flag_str2comp_key) == 0) {
       // アトムフラグ
       flag_str2comp = unify_atom(val_term, TRUE_ATOM);
+    } else if (strcmp(key_str, flag_emptylist_key) == 0) {
+      // 空リスト許容フラグ
+      flag_emptylist = unify_atom(val_term, TRUE_ATOM);
     } else {
       // 未知のオプションキー
       // 何もしない
     }
+  }
+
+  if (flag_emptylist && IsAtom(ain) && GetAtom(ain) == ATOM_NIL) {
+    YIELD(UnifyAtomE(Env, out, ATOM_NIL));
   }
 
   int len = az_term_to_cstring_length(Env, ain);
