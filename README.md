@@ -70,7 +70,7 @@ API
 JSON文字列をProlog節へ変換する。
 
 - OPTIONS: オプション指定
-- JSON: JSON文字列（アトムまたは文字コードリスト）(*)
+- JSON: JSON文字列（アトムまたは文字コードリスト）(＊1)
 - TERM: Prolog節
 
 OPTIONSは素性構造で指定する。指定方法は以下のとおり。
@@ -84,16 +84,17 @@ JSON要素とProlog節の対応は以下のとおり。
 
 | JSON要素   | Prolog節 | 備考 |
 | :---   | :---     | :---     |
-| object | 素性構造 | obj2compが有効な場合は、素性構造ではなく fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項 |
-| array  | リスト   | |
-| string | アトム   | str2compが有効な場合は、アトムではなく str([...])形式の文字コードリストを含むstrによる複合項 |
+| object | 素性構造 | obj2compが有効な場合、素性構造ではなく<br/> fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項となる |
+| array  | リスト(＊2)   | |
+| string | アトム(＊2)   | str2compが有効な場合、アトムではなく<br/> str([...])形式の文字コードリストを含むstrによる複合項となる |
 | number(整数) | 整数     | |
 | number(浮動小数点数) | 浮動小数点数     | |
-| true   | true   | str2compが無効な場合は、stringの"true"と区別できない |
-| false  | false  | str2compが無効な場合は、stringの"false"と区別できない |
-| null   | null   | str2compが無効な場合は、stringの"null"と区別できない |
+| true   | true   | str2compが無効な場合、変換後にstringの"true"と区別できない |
+| false  | false  | str2compが無効な場合、変換後にstringの"false"と区別できない |
+| null   | null   | str2compが無効な場合、変換後にstringの"null"と区別できない |
 
-*: `[]`は空文字列とみなされエラーとなる
+- ＊1: `[]`のみの入力は空文字列とみなされパースエラーとなる。
+- ＊2: JSON要素としての空リスト`[]`は例外的に`[]`(アトム)となる。
 
 ## term_json(+TERM, -JSON)
 
@@ -124,8 +125,8 @@ Prolog節とJSON要素の対応は以下のとおり。
 | Prolog節 | JSON要素 | 備考 |
 | :---   | :---     | :---     |
 | 素性構造 | object |  |
-| リスト(*)   | array | |
-| アトム(*)   | string | |
+| リスト (＊1)   | array | |
+| アトム (＊1) (＊2)   | string | |
 | 整数    | number(整数) | |
 | 浮動小数点数 | number(浮動小数点数) | |
 | true  | true | |
@@ -134,7 +135,8 @@ Prolog節とJSON要素の対応は以下のとおり。
 | fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項 | object |
 | str([...])形式の文字コードリストを含むstrによる複合項 | string |
 
-*: `[]`は空リストとみなす。空文字列を指定する場合はstr([])とする。
+- ＊1: `[]`(アトム)は例外的に空リストとみなす。空文字列を指定する場合はstr([])を用いる。
+- ＊2: 文字列としての"true" "false" "null"は指定できない。その場合はstr([...])形式の文字コードリストを含むstrによる複合項を用いる。
 
 azjsonとの比較
 ==============
