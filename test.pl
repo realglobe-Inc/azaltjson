@@ -55,7 +55,7 @@ test(T, Exp, M):-
 	write(T),
 	write(' % '), write(M), nl.
 
-:-
+alltest:-
 	test(json_term('', _),           fail, '空文字列はparseエラーになること'),
 	test(json_term("", _),           fail, '空文字列はparseエラーになること'),
 	test(json_term(_, _),            9, '変数はparseエラーになること'),
@@ -109,3 +109,12 @@ test(T, Exp, M):-
 		   '"_\"_\\_/_日本語"' % Unicode文字エスケープシーケンスは未対応
 		  ), 'エスケープ特殊文字'),
 	nl.
+
+:- alltest.
+/*
+:-
+	repeat(C),
+	alltest,
+	Mod is C mod 100, Mod == 0, write(C), nl,
+	C >= 10000, !.
+*/
