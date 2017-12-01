@@ -414,9 +414,13 @@ static json_t* term2json(Frame* Env, TERM* term) {
       if (s != buf) free(s);
 
     } else {
+      char functor_str[AZ_MAX_ATOM_LENGTH] = {0};
+      Atom2Asciz(functor, functor_str);
+      fprintf(stderr, "Unknown functor: [%s]\n", functor_str);
       return NULL;
     }
   } else {
+    fprintf(stderr, "Unknown term\n");
     return NULL;
   }
 
