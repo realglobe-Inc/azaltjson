@@ -10,7 +10,7 @@ LDOPT = $(PLDOPT) -L./$(LIBJANSSON)/src/.libs -L$(AZProlog)/lib -lazp
 
 #CFLAGS = -Wall -O2 $(CCOPT)
 #CFLAGS = -O2 $(CCOPT)
-CFLAGS = -g -O0 $(CCOPT) # -DDEBUG
+CFLAGS = -g -O0 $(CCOPT) -Wall # -DDEBUG
 
 LDLIBS = $(LDOPT) `pkg-config --libs glib-2.0` -ljansson
 

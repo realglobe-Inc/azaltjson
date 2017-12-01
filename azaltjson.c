@@ -44,11 +44,9 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
   switch (json_typeof(jv)) {
   case JSON_OBJECT: {
     // オブジェクト
-    size_t size;
     const char *key;
     json_t *value;
 
-    size = json_object_size(jv);
     MakeUndef(Env);
     TERM *prefs_term = next_var_cell - 1;
     TERM *list_head_term = prefs_term;
@@ -120,7 +118,6 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
   }
   case JSON_STRING: {
     // 文字列
-    BASEINT a;
     const char *s = json_string_value(jv);
     if (s == 0) return 0;
     if (!flag_str2comp) {
