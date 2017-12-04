@@ -129,7 +129,7 @@ Prolog節とJSON要素の対応は以下のとおり。
 | :---   | :---     | :---     |
 | 素性構造 | object |  |
 | リスト (＊1)   | array | |
-| アトム ([] true false null 以外) (＊1) (＊2)   | string | |
+| アトム (`[]` `true` `false` `null` 以外) (＊1) (＊2)   | string | |
 | 整数    | number(整数) | |
 | 浮動小数点数 | number(浮動小数点数) | |
 | true (アトム)  | true | |
