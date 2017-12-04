@@ -199,9 +199,9 @@ pred P3_azaltjson__json_term(Frame *Env) {
   TERM *out = PARG(argc, 2);
 
   int flag_str2comp = 0;
-  int flag_emptylist = 0;
+  int flag_input_atom = 0;
   char flag_str2comp_key[] = "str2comp";
-  char flag_emptylist_key[] = "emptylist";
+  char flag_input_atom_key[] = "input_atom";
 
   // オプション解析
   if (!IsNil(opt) && !IsCons(opt)) {
@@ -224,16 +224,16 @@ pred P3_azaltjson__json_term(Frame *Env) {
     if (strcmp(key_str, flag_str2comp_key) == 0) {
       // アトムフラグ
       flag_str2comp = unify_atom(val_term, TRUE_ATOM);
-    } else if (strcmp(key_str, flag_emptylist_key) == 0) {
+    } else if (strcmp(key_str, flag_input_atom_key) == 0) {
       // 空リスト許容フラグ
-      flag_emptylist = unify_atom(val_term, TRUE_ATOM);
+      flag_input_atom = unify_atom(val_term, TRUE_ATOM);
     } else {
       // 未知のオプションキー
       // 何もしない
     }
   }
 
-  if (flag_emptylist && IsAtom(ain) && GetAtom(ain) == ATOM_NIL) {
+  if (flag_input_atom && IsAtom(ain) && GetAtom(ain) == ATOM_NIL) {
     YIELD(UnifyAtomE(Env, out, ATOM_NIL));
   }
 
