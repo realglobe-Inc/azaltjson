@@ -78,9 +78,9 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 
 | 素性項目名 | 設定型 | デフォルト値 | 説明 |
 | :--- | :--- | :--- | :--- |
+| input_atom | true / false | false | 入力をアトムとする(true)か文字コードリストとする(false)かを指定する。<br />本オプションは入力が`[]`のみの場合の挙動にのみ影響を与える。<br/>trueを指定した場合、パースエラーにならず空リストを返す。<br/>falseを指定した場合は空文字列とみなされパースエラーとなる。 |
 | obj2comp | true / false | false | trueを指定した場合、オブジェクトをfsファンクタによる複合項とする。<br/>falseを指定した場合は素性構造とする。 |
 | str2comp | true / false | false | trueを指定した場合、文字列をstrファンクタによる複合項とする。<br/>falseを指定した場合はアトムとする。 |
-| input_atom | true / false | false | 入力をアトムとする(true)か文字コードリストとする(false)かを指定する。<br />本オプションは入力が`[]`のみの場合の挙動にのみ影響を与える。<br/>trueを指定した場合、パースエラーにならず空リストを返す。<br/>falseを指定した場合は空文字列とみなされパースエラーとなる。 |
 
 JSON要素とProlog節の対応は以下のとおり。
 
@@ -140,6 +140,40 @@ Prolog節とJSON要素の対応は以下のとおり。
 
 - ＊1: `[]`(アトム)は例外的に空リストとみなす。
 - ＊2: アトムから文字列として`[]` `true` `false` `null`は指定できない。その場合はstr([...])形式の文字コードリストを含むstrによる複合項を用いる。
+
+
+## jsonfile_term(+JSON, -TERM)
+
+`jsonfile_term({}, JSON, TERM)` と同等（省略形）
+
+## jsonfile_term(+OPTIONS, +JSON, -TERM)
+
+JSONファイルを入力してProlog節へ変換する。
+
+- OPTIONS: オプション指定
+- JSON: JSONファイルパス（アトムまたは文字コードリスト）
+- TERM: Prolog節
+
+詳細はjson_termと同様
+（`input_atom`オプションは無視される）
+
+## term_jsonfile(+TERM, +JSON)
+
+`term_jsonfile({}, TERM, JSON)` と同等（省略形）
+
+## term_jsonfile(+OPTIONS, +TERM, +JSON)
+
+Prolog節をJSONファイルへ変換して出力する。
+
+- OPTIONS: オプション指定
+- TERM: Prolog節
+- JSON: JSONファイルパス（アトムまたは文字コードリスト）
+
+詳細はterm_jsonと同様
+（`output_codes`オプションは無視される）
+
+JSONファイルパスに既にファイルが存在した場合は上書きされる。
+
 
 azjsonとの比較
 ==============

@@ -52,7 +52,10 @@ test(T, Exp, M):-
 	(Exp == Act-> Result = 'OK   '; Result = 'NG!!!'),
 	nl,
 	write('test    '), write('['), write(Result), write(']: '),
-	write(T),
+	(Exp == Act->
+	 (write(Exp), write(' <- '));
+	 (write(' Exp='), write(Exp), write(' Act='), write(Act))),
+	write(' '), write(T),
 	write(' % '), write(M), nl.
 
 alltest:-
@@ -69,7 +72,9 @@ alltest:-
 	test(bidcheck(json_term_json, "123", 123),       '数値のみ'),
 	test(bidcheck(json_term_json, '123.45', 123.45), '実数のみ'),
 	test(bidcheck(json_term_json, "123.45", 123.45), '実数のみ'),
-	test(json_term('[ ]', []),    '空リスト'),
+	test(json_term('[]', []),        fail,           '空文字列'),
+	test(json_term({input_atom: true}, '[]', []),    '空リスト'),
+	test(json_term('[ ]', []),                       '空リスト'),
 	test(bidcheck(json_term_json, "[]", []),         '空リスト'),
 	test(bidcheck(json_term_json, '{}', {}),         '空オブジェクト'),
 	test(bidcheck(json_term_json, "{}", {}),         '空オブジェクト'),

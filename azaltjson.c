@@ -7,8 +7,8 @@
 #define PARG(n,i)       (next_var_cell - (n) + (i))
 #define ILL_ARG  9
 #define EMPTY_LIST ("[]")
-extern pred P3_azaltjson__json_term(Frame *Env);
-extern pred P3_azaltjson__term_json(Frame *Env);
+extern pred P4_azaltjson__json_term(Frame *Env);
+extern pred P4_azaltjson__term_json(Frame *Env);
 
 static BASEINT TRUE_ATOM;
 static BASEINT FALSE_ATOM;
@@ -23,8 +23,8 @@ extern int initiate_plmodule(Frame *Env);
 extern int initiate_azaltjson(Frame *Env) {
   initiate_plmodule(Env); // prologモジュール初期化（plmodule.c内部で定義）
 
-  put_bltn("azaltjson__json_term", 3, P3_azaltjson__json_term);
-  put_bltn("azaltjson__term_json", 3, P3_azaltjson__term_json);
+  put_bltn("azaltjson__json_term", 4, P4_azaltjson__json_term);
+  put_bltn("azaltjson__term_json", 4, P4_azaltjson__term_json);
 
   TRUE_ATOM  = PutSystemAtom(Env, "true");
   FALSE_ATOM = PutSystemAtom(Env, "false");
@@ -185,8 +185,8 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
   return ret;
 }
 
-pred P3_azaltjson__json_term(Frame *Env) {
-  int argc = 3;
+pred P4_azaltjson__json_term(Frame *Env) {
+  int argc = 4;
 
   json_t *jx;
   json_error_t error;
@@ -194,9 +194,10 @@ pred P3_azaltjson__json_term(Frame *Env) {
   char *s;
   char buf[512];
 
-  TERM *opt = PARG(argc, 0);
-  TERM *ain = PARG(argc, 1);
-  TERM *out = PARG(argc, 2);
+  TERM *isfile = PARG(argc, 0);
+  TERM *opt = PARG(argc, 1);
+  TERM *ain = PARG(argc, 2);
+  TERM *out = PARG(argc, 3);
 
   int flag_str2comp = 0;
   int flag_input_atom = 0;
@@ -233,8 +234,10 @@ pred P3_azaltjson__json_term(Frame *Env) {
     }
   }
 
-  if (flag_input_atom && IsAtom(ain) && GetAtom(ain) == ATOM_NIL) {
-    YIELD(UnifyAtomE(Env, out, ATOM_NIL));
+  if (!(IsAtom(isfile) && GetAtom(isfile) == TRUE_ATOM)) {
+    if (flag_input_atom && IsAtom(ain) && GetAtom(ain) == ATOM_NIL) {
+      YIELD(UnifyAtomE(Env, out, ATOM_NIL));
+    }
   }
 
   int len = az_term_to_cstring_length(Env, ain);
@@ -257,7 +260,11 @@ pred P3_azaltjson__json_term(Frame *Env) {
     - JSON_DECODE_INT_AS_REAL : すべての数値を実数値（浮動小数点数）として解釈
     - JSON_ALLOW_NUL          : 文字列値の中で\ u0000エスケープを許可
   */
-  jx = json_loads(s, JSON_REJECT_DUPLICATES | JSON_DECODE_ANY, &error);
+  if (IsAtom(isfile) && GetAtom(isfile) == TRUE_ATOM) {
+    jx = json_load_file(s, JSON_REJECT_DUPLICATES | JSON_DECODE_ANY, &error);
+  } else {
+    jx = json_loads(s, JSON_REJECT_DUPLICATES | JSON_DECODE_ANY, &error);
+  }
   if (jx == 0) {
     fprintf(stderr, "text:[%s]\n", error.text);
     fprintf(stderr, "%d:%d:%d, source:[%s]\n",
@@ -433,15 +440,16 @@ static json_t* term2json(Frame* Env, TERM* term) {
   return jv;
 }
 
-pred P3_azaltjson__term_json(Frame *Env) {
-  int argc = 3;
+pred P4_azaltjson__term_json(Frame *Env) {
+  int argc = 4;
 
   json_t *jv;
   int ret;
 
-  TERM *opt = PARG(argc, 0);
-  TERM *ain = PARG(argc, 1);
-  TERM *out = PARG(argc, 2);
+  TERM *isfile = PARG(argc, 0);
+  TERM *opt = PARG(argc, 1);
+  TERM *ain = PARG(argc, 2);
+  TERM *out = PARG(argc, 3);
 
   char flag_output_codes_key[] = "output_codes";
   int flag_output_codes = 0;
@@ -515,40 +523,65 @@ pred P3_azaltjson__term_json(Frame *Env) {
     - JSON_ESCAPE_SLASH       : 文字列中の/文字をエスケープする
     - JSON_REAL_PRECISION(n)  : 最大n桁の精度ですべての実数を出力する
   */
-  char *s = json_dumps(jv, flags_json_dumps);
-  json_decref(jv);
-  if (s == 0) {
-    YIELD(FAIL);
-  }
+  if (IsAtom(isfile) && GetAtom(isfile) == TRUE_ATOM) {
+    char buf[256];
+    char *s;
+    int len;
 
-  if (!flag_output_codes) {
-    // string -> アトム
-    ret = unify_atom(out, Asciz2Atom(Env, (char* )s));
-    if (!ret) { YIELD(FAIL); }
-  } else {
-    // string -> 文字コードリスト格納str複合項
-    TERM *list_head_term = out;
-    TERM *list_tail_term = out;
-
-    int i = 0;
-    for (i = 0; i < strlen(s); i++) {
-      MakeUndef(Env);
-      TERM *val_term = next_var_cell - 1; // 文字コード
-      ret = UnifyIntE(Env, val_term, (unsigned char)s[i]);
-      if (!ret) { YIELD(FAIL); }
-
-      MakeUndef(Env);
-      list_tail_term = next_var_cell - 1; // リスト要素
-      ret = UnifyCons(Env, list_head_term, val_term, list_tail_term);
-      if (!ret) { YIELD(FAIL); }
-
-      list_head_term = list_tail_term;
+    len = az_term_to_cstring_length(Env, out);
+    if (len >= sizeof(buf)) {
+      s = malloc(len + 1);
+      if (s == 0) YIELD(FAIL);
+    } else {
+      s = buf;
     }
-    // リスト終端
-    ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
-    if (!ret) { YIELD(FAIL); }
+
+    (void )az_term_to_cstring(Env, out, s, len + 1);
+    if (json_dump_file(jv, s, flags_json_dumps)) {
+      fprintf(stderr, "json_dump_file: [%s]\n", s);
+      if (s != buf) free(s);
+      YIELD(FAIL);
+    }
+    if (s != buf) free(s);
+
+    YIELD(DET_SUCC);
+  } else {
+    char *s = json_dumps(jv, flags_json_dumps);
+    json_decref(jv);
+    if (s == 0) {
+      YIELD(FAIL);
+    }
+
+    if (!flag_output_codes) {
+      // string -> アトム
+      ret = unify_atom(out, Asciz2Atom(Env, (char* )s));
+      if (!ret) { free(s); YIELD(FAIL); }
+    } else {
+      // string -> 文字コードリスト格納str複合項
+      TERM *list_head_term = out;
+      TERM *list_tail_term = out;
+
+      int i = 0;
+      for (i = 0; i < strlen(s); i++) {
+        MakeUndef(Env);
+        TERM *val_term = next_var_cell - 1; // 文字コード
+        ret = UnifyIntE(Env, val_term, (unsigned char)s[i]);
+        if (!ret) { free(s); YIELD(FAIL); }
+
+        MakeUndef(Env);
+        list_tail_term = next_var_cell - 1; // リスト要素
+        ret = UnifyCons(Env, list_head_term, val_term, list_tail_term);
+        if (!ret) { free(s); YIELD(FAIL); }
+
+        list_head_term = list_tail_term;
+      }
+      // リスト終端
+      ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
+      if (!ret) { free(s); YIELD(FAIL); }
+    }
+    free(s);
+    YIELD(DET_SUCC);
   }
 
-  free(s);
-  YIELD(ret);
+  YIELD(DET_SUCC);
 }

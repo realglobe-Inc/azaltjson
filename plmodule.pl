@@ -5,12 +5,25 @@ json_term(INPUT, TERM):-
 
 % ?- json_term(+OPTIONS, +INPUT, -TERM).
 json_term(OPTIONS, INPUT, TERM):-
+	azaltjson__pre_json_term(false, OPTIONS, INPUT, TERM).
+
+% ?- jsonfile_term(+INPUT, -TERM).
+jsonfile_term(INPUT, TERM):-
+	jsonfile_term({}, INPUT, TERM).
+
+% ?- jsonfile_term(+OPTIONS, +INPUT, -TERM).
+jsonfile_term(OPTIONS, INPUT, TERM):-
+	azaltjson__pre_json_term(true, OPTIONS, INPUT, TERM).
+
+% 非公開API
+azaltjson__pre_json_term(ISFILE, OPTIONS, INPUT, TERM):-
 	fstructure(OPTIONS),
 	fs_list(OPTIONS, OPTIONS_LIST),
-	azaltjson__json_term(OPTIONS_LIST, INPUT, PRETERM),
+	azaltjson__json_term(ISFILE, OPTIONS_LIST, INPUT, PRETERM),
 	((OPTIONS = {obj2comp: FLAG_FS}, nonvar(FLAG_FS), FLAG_FS = true)->
 	 PRETERM = TERM;
 	 azaltjson__changeterm(PRETERM, TERM)).
+
 
 % ?- term_json(+INPUT, -TERM).
 term_json(INPUT, TERM):-
@@ -18,12 +31,24 @@ term_json(INPUT, TERM):-
 
 % ?- term_json(+OPTIONS, +INPUT, -TERM).
 term_json(OPTIONS, INPUT, TERM):-
+	azaltjson__pre_term_json(false, OPTIONS, INPUT, TERM).
+
+% ?- term_jsonfile(+INPUT, -TERM).
+term_jsonfile(INPUT, TERM):-
+	term_jsonfile({}, INPUT, TERM).
+
+% ?- term_jsonfile(+OPTIONS, +INPUT, -TERM).
+term_jsonfile(OPTIONS, INPUT, TERM):-
+	azaltjson__pre_term_json(true, OPTIONS, INPUT, TERM).
+
+% 非公開API
+azaltjson__pre_term_json(ISFILE, OPTIONS, INPUT, TERM):-
 	fstructure(OPTIONS),
 	fs_list(OPTIONS, OPTIONS_LIST),
 	((OPTIONS = {without_fs: FLAG_WOFS}, nonvar(FLAG_WOFS), FLAG_WOFS = true)->
 	 SANINPUT = INPUT;
 	 azaltjson__sanitize_term(INPUT, SANINPUT)),
-	azaltjson__term_json(OPTIONS_LIST, SANINPUT, TERM).
+	azaltjson__term_json(ISFILE, OPTIONS_LIST, SANINPUT, TERM).
 
 
 % 非公開API
