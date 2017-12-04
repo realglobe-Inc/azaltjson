@@ -87,13 +87,13 @@ JSON要素とProlog節の対応は以下のとおり。
 | JSON要素   | Prolog節 | 備考 |
 | :---   | :---     | :---     |
 | object | 素性構造 | obj2compが有効な場合、素性構造ではなく<br/> fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項となる |
-| array  | リスト(＊1)   | |
-| string | アトム(＊1)   | str2compが有効な場合、アトムではなく<br/> str([...])形式の文字コードリストを含むstrによる複合項となる |
+| array  | リスト(＊1)   |  |
+| string | アトム(＊1)   | str2compが有効な場合、アトムではなく<br/> str([...])形式の文字コードリストを含むstrによる複合項となる<br/>str2compが無効な場合、変換後に`[]` `true` `false` `null`とstringの区別不可 |
 | number(整数) | 整数     | |
 | number(浮動小数点数) | 浮動小数点数     | |
-| true   | true (アトム)   | str2compが無効な場合、変換後にstringの"true"と区別不可 |
-| false  | false (アトム) | str2compが無効な場合、変換後にstringの"false"と区別不可 |
-| null   | null (アトム)  | str2compが無効な場合、変換後にstringの"null"と区別不可 |
+| true   | true (アトム)   |  |
+| false  | false (アトム) |  |
+| null   | null (アトム)  |  |
 
 - ＊1: JSON要素としての空リスト`[]`は例外的に`[]`(アトム)となる。
 
