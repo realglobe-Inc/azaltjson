@@ -19,9 +19,9 @@ static BASEINT FUNCT_STR_ATOM;
 
 static BASEINT EMPTY_LIST_ATOM;
 
-extern int initiate_plmodule(Frame *Env);
+extern int initiate_azaltjson_plmodule(Frame *Env);
 extern int initiate_azaltjson(Frame *Env) {
-  initiate_plmodule(Env); // prologモジュール初期化（plmodule.c内部で定義）
+  initiate_azaltjson_plmodule(Env); // prologモジュール初期化（azaltjson_plmodule.c内部で定義）
 
   put_bltn("azaltjson__json_term", 4, P4_azaltjson__json_term);
   put_bltn("azaltjson__term_json", 4, P4_azaltjson__term_json);

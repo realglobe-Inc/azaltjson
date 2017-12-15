@@ -29,16 +29,16 @@ FOR_TUNNING = # /h 256 /l 128 /g 128 /a 16 /s 128 /fast # /no
 
 default: azaltjson.so
 
-azaltjson.so: azaltjson.o plmodule.o
+azaltjson.so: azaltjson.o azaltjson_plmodule.o
 	$(CC) -shared -dynamiclib -o $@ $^ $(LDLIBS)
 
 azaltjson.o: azaltjson.c
 	$(CC) $(CFLAGS) -fPIC -o $@ -c $^
 
-plmodule.c: plmodule.pl
+azaltjson_plmodule.c: azaltjson_plmodule.pl
 	$(AZPC) -p $^ /ncc $(AZPCFLAGS)
 
-plmodule.o: plmodule.c
+azaltjson_plmodule.o: azaltjson_plmodule.c
 	$(CC) $(CFLAGS) -fPIC -o $@ -c $^
 
 clean:
