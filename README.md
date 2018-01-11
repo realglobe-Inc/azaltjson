@@ -14,7 +14,7 @@ JSONとProlog節を相互変換できる。
   * macOSの場合: `brew install jansson`
 
 
-ビルド方法
+ビルドおよびインストール方法
 -------
 
 * Ubuntuの場合: `make && make install`
