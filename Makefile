@@ -3,10 +3,11 @@
 NAME = azaltjson
 DATE_TAG:=`date +%Y%m%d`
 
-LIBJANSSON_PREFIX = /usr/local
+LIBJANSSON_INC_PREFIX = /usr
+LIBJANSSON_LIB_PREFIX = /usr/local
 
-CCOPT = $(PCCOPT) -I./$(LIBJANSSON_PREFIX)/src -I$(AZProlog)/include
-LDOPT = $(PLDOPT) -L./$(LIBJANSSON_PREFIX)/lib -L$(AZProlog)/lib -lazp
+CCOPT = $(PCCOPT) -I $(LIBJANSSON_INC_PREFIX)/include -I$(AZProlog)/include
+LDOPT = $(PLDOPT) -L $(LIBJANSSON_LIB_PREFIX)/lib -L$(AZProlog)/lib -lazp
 
 #CFLAGS = -Wall -O2 $(CCOPT)
 #CFLAGS = -O2 $(CCOPT)
