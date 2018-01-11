@@ -2,21 +2,29 @@
 README
 ======
 
-azaltjsonは、AZ-PrologからJansson(JSONライブラリ)を利用するための非公式拡張ライブラリである。
+azaltjsonは、AZ-PrologからJansson(JSONライブラリ)を利用するための拡張ライブラリである。
 JSONとProlog節を相互変換できる。
 
 必要なもの
-======
+-------
 
 * AZ-Prolog >= 9.64 (system/pl/fs_utility.plの素性構造型操作のユーティリティ(コンパイル組込述語）を使用可能なもの)
 * Jansson
+  * Ubuntuの場合: `sudo apt-get install -y libjansson-dev`
+  * macOSの場合: `brew install jansson`
+
+
+ビルド方法
+-------
+
+* Ubuntuの場合: `make && make install`
+* macOSの場合: `make && make install_mac`
 
 
 使用例
-======
+-------
 
-簡単な使用例
---------
+### 簡単な使用例
 
 ```
 | ?- dlib_require(azaltjson).
@@ -30,8 +38,7 @@ yes
 ```
 
 
-オプション指定例
---------
+### オプション指定例
 
 ```
 | ?- dlib_require(azaltjson).
@@ -59,13 +66,13 @@ yes
 ```
 
 API
-======
+-------
 
-## json_term(+JSON, -TERM)
+### json_term(+JSON, -TERM)
 
 `json_term({}, JSON, TERM)` と同等（省略形）
 
-## json_term(+OPTIONS, +JSON, -TERM)
+### json_term(+OPTIONS, +JSON, -TERM)
 
 JSON文字列をProlog節へ変換する。
 
@@ -97,11 +104,11 @@ JSON要素とProlog節の対応は以下のとおり。
 
 - ＊1: JSON要素としての空リスト`[]`は例外的に`[]`(アトム)となる。
 
-## term_json(+TERM, -JSON)
+### term_json(+TERM, -JSON)
 
 `term_json({}, TERM, JSON)` と同等（省略形）
 
-## term_json(+OPTIONS, +TERM, -JSON)
+### term_json(+OPTIONS, +TERM, -JSON)
 
 Prolog節をJSON文字列へ変換する。
 
@@ -142,11 +149,11 @@ Prolog節とJSON要素の対応は以下のとおり。
 - ＊2: アトムから文字列として`[]` `true` `false` `null`は指定できない。その場合はstr([...])形式の文字コードリストを含むstrによる複合項を用いる。
 
 
-## jsonfile_term(+JSON, -TERM)
+### jsonfile_term(+JSON, -TERM)
 
 `jsonfile_term({}, JSON, TERM)` と同等（省略形）
 
-## jsonfile_term(+OPTIONS, +JSON, -TERM)
+### jsonfile_term(+OPTIONS, +JSON, -TERM)
 
 JSONファイルを入力してProlog節へ変換する。
 
@@ -157,11 +164,11 @@ JSONファイルを入力してProlog節へ変換する。
 詳細はjson_termと同様
 （`input_atom`オプションは無視される）
 
-## term_jsonfile(+TERM, +JSON)
+### term_jsonfile(+TERM, +JSON)
 
 `term_jsonfile({}, TERM, JSON)` と同等（省略形）
 
-## term_jsonfile(+OPTIONS, +TERM, +JSON)
+### term_jsonfile(+OPTIONS, +TERM, +JSON)
 
 Prolog節をJSONファイルへ変換して出力する。
 
@@ -176,10 +183,9 @@ JSONファイルパスに既にファイルが存在した場合は上書きさ�
 
 
 azjsonとの比較
-==============
+-------
 
-parse
---------
+### parse
 
 azjson
 ```
@@ -210,8 +216,7 @@ V2	= 0.789
 属性が存在しない場合にfailするにはpvalue/3またはnonvar/1を用いる。
 
 
-stringify
---------
+### stringify
 
 azjson
 ```
@@ -239,13 +244,12 @@ A	= '{"aa": {"bb": [123, {"cc": "456", "10": 0.78900000000000003}]}}'
 ```
 
 kanji_mode毎の挙動
-====================
+-------
 
-JSON文字列をProlog節へ
--------------------------------------
+### JSON文字列をProlog節へ
 
-- 入力のJSON文字列はアトムまたは1バイトずつ分かれている文字コードリストである必要があります。
-- str2compオプション指定時に生成される文字コードリストは1バイトずつ分かれます。
+- 入力のJSON文字列はアトムまたは1バイトずつ分かれている文字コードリストである必要がある。
+- str2compオプション指定時に生成される文字コードリストは1バイトずつ分かれる。
 
 ```
 | ?- kanji_mode(_, on),  atom_codes('"マルチバイト"', C), json_term(C, T).
@@ -267,11 +271,10 @@ T	= str([227,131,158,227,131,171,227,131,129,227,131,144,227,130,164,227,131,136
 yes
 ```
 
-Prolog節をJSON文字列へ
--------------------------------------
+### Prolog節をJSON文字列へ
 
-- 入力に含まれる文字コードリストは1バイトずつ分かれている必要があります。
-- output_codesオプション指定時に生成される文字コードリストは1バイトずつ分かれます。
+- 入力に含まれる文字コードリストは1バイトずつ分かれている必要がある。
+- output_codesオプション指定時に生成される文字コードリストは1バイトずつ分かれる。
 
 ```
 | ?- kanji_mode(_, on),  atom_codes(マルチバイト, C), term_json(str(C), R).

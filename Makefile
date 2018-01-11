@@ -1,8 +1,5 @@
 # Makefile for azaltjson
 
-NAME = azaltjson
-DATE_TAG:=`date +%Y%m%d`
-
 LIBJANSSON_INC_PREFIX = /usr
 LIBJANSSON_LIB_PREFIX = /usr/local
 
@@ -23,8 +20,8 @@ AZPC_SYSTEM_PL = \
 	$(AZProlog)/system/pl/setof.pl \
 	$(AZProlog)/system/pl/utility.pl
 
-FOR_DEBUG = /ccopt "-g -pg -O0" /link_opt "-g -pg -O0" /debug
-FOR_TUNNING = # /h 256 /l 128 /g 128 /a 16 /s 128 /fast # /no
+# FOR_DEBUG = /ccopt "-g -pg -O0" /link_opt "-g -pg -O0" /debug
+# FOR_TUNNING = # /h 256 /l 128 /g 128 /a 16 /s 128 /fast # /no
 
 default: azaltjson.so
 
@@ -46,5 +43,8 @@ clean:
 install:
 	cp -p azaltjson.so $(AZProlog)/lib/azprolog/ext/.
 
+install_mac:
+	cp -p azaltjson.so $(AZProlog)/lib/azprolog/ext/azaltjson.dylib
+
 test:
-	echo "?-halt." | prolog_c -c test.pl 2> /dev/null # | grep "^test "
+	echo "?-halt." | prolog_c -c test.pl 2> /dev/null # | grep ^test
