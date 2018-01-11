@@ -3,16 +3,16 @@
 NAME = azaltjson
 DATE_TAG:=`date +%Y%m%d`
 
-LIBJANSSON = jansson
+LIBJANSSON_PREFIX = /usr/local
 
-CCOPT = $(PCCOPT) `pkg-config --cflags glib-2.0` -I./$(LIBJANSSON)/src -I$(AZProlog)/include
-LDOPT = $(PLDOPT) -L./$(LIBJANSSON)/src/.libs -L$(AZProlog)/lib -lazp
+CCOPT = $(PCCOPT) -I./$(LIBJANSSON_PREFIX)/src -I$(AZProlog)/include
+LDOPT = $(PLDOPT) -L./$(LIBJANSSON_PREFIX)/lib -L$(AZProlog)/lib -lazp
 
 #CFLAGS = -Wall -O2 $(CCOPT)
 #CFLAGS = -O2 $(CCOPT)
 CFLAGS = -g -O0 $(CCOPT) -Wall # -DDEBUG
 
-LDLIBS = $(LDOPT) `pkg-config --libs glib-2.0` -ljansson
+LDLIBS = $(LDOPT) -ljansson
 
 AZPCFLAGS = /message /s_verbos /cc $(CC) /ccopt "$(CCOPT)" /link_opt "$(LDOPT)"
 AZPC = azpc
@@ -21,8 +21,6 @@ AZPC_SYSTEM_PL = \
 	$(AZProlog)/system/pl/fs_utility.pl \
 	$(AZProlog)/system/pl/setof.pl \
 	$(AZProlog)/system/pl/utility.pl
-
-LIB2_SRC = #/lib crypto
 
 FOR_DEBUG = /ccopt "-g -pg -O0" /link_opt "-g -pg -O0" /debug
 FOR_TUNNING = # /h 256 /l 128 /g 128 /a 16 /s 128 /fast # /no
@@ -46,9 +44,6 @@ clean:
 
 install:
 	cp -p azaltjson.so $(AZProlog)/lib/azprolog/ext/.
-
-install_libjansson:
-	cp -Rp $(LIBJANSSON)/src/.libs/libjansson.so* $(AZProlog)/lib/.
 
 test:
 	echo "?-halt." | prolog_c -c test.pl 2> /dev/null # | grep "^test "
