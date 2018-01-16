@@ -499,11 +499,13 @@ pred P4_azaltjson__term_json(Frame *Env) {
         flags_json_dumps |= JSON_ESCAPE_SLASH;
       }
     }
+#ifdef JSON_REAL_PRECISION
     else if (strcmp(key_str, "json_real_precision") == 0) {
       if (IsInt(val_term)) {
         flags_json_dumps |= JSON_REAL_PRECISION(GetInt(val_term));
       }
     }
+#endif
   }
 
   jv = term2json(Env, ain);
