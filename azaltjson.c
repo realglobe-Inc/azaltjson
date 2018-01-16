@@ -14,7 +14,7 @@ static BASEINT TRUE_ATOM;
 static BASEINT FALSE_ATOM;
 static BASEINT NULL_ATOM;
 
-static BASEINT FUNCT_FS_ATOM;
+static BASEINT FUNCT_OBJ_ATOM;
 static BASEINT FUNCT_STR_ATOM;
 
 static BASEINT EMPTY_LIST_ATOM;
@@ -30,7 +30,7 @@ extern int initiate_azaltjson(Frame *Env) {
   FALSE_ATOM = PutSystemAtom(Env, "false");
   NULL_ATOM  = PutSystemAtom(Env, "null");
 
-  FUNCT_FS_ATOM  = PutSystemAtom(Env, "fs");
+  FUNCT_OBJ_ATOM = PutSystemAtom(Env, "obj");
   FUNCT_STR_ATOM = PutSystemAtom(Env, "str");
 
   EMPTY_LIST_ATOM = PutSystemAtom(Env, EMPTY_LIST);
@@ -48,9 +48,9 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
     json_t *value;
 
     MakeUndef(Env);
-    TERM *prefs_term = next_var_cell - 1;
-    TERM *list_head_term = prefs_term;
-    TERM *list_tail_term = prefs_term;
+    TERM *obj_term = next_var_cell - 1;
+    TERM *list_head_term = obj_term;
+    TERM *list_tail_term = obj_term;
 
     json_object_foreach(jv, key, value) {
       MakeUndef(Env);
@@ -84,8 +84,8 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
     ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
     if (!ret) { return ret; }
 
-    // object -> ペアリスト格納fs複合項
-    ret = UnifyCompTerm(Env, term, FUNCT_FS_ATOM, 1, prefs_term);
+    // object -> ペアリスト格納obj複合項
+    ret = UnifyCompTerm(Env, term, FUNCT_OBJ_ATOM, 1, obj_term);
     if (!ret) { return ret; }
     break;
   }
@@ -127,9 +127,9 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
     } else {
       // string -> 文字コードリスト格納str複合項
       MakeUndef(Env);
-      TERM *codes_term = next_var_cell - 1;
-      TERM *list_head_term = codes_term;
-      TERM *list_tail_term = codes_term;
+      TERM *str_term = next_var_cell - 1;
+      TERM *list_head_term = str_term;
+      TERM *list_tail_term = str_term;
 
       int i = 0;
       for (i = 0; i < strlen(s); i++) {
@@ -149,7 +149,7 @@ static int json2term(Frame* Env, TERM* term, json_t* jv, int flag_str2comp) {
       ret = UnifyAtomE(Env, list_tail_term, ATOM_NIL);
       if (!ret) { return ret; }
 
-      ret = UnifyCompTerm(Env, term, FUNCT_STR_ATOM, 1, codes_term);
+      ret = UnifyCompTerm(Env, term, FUNCT_STR_ATOM, 1, str_term);
       if (!ret) { return ret; }
     }
     break;
@@ -365,7 +365,7 @@ static json_t* term2json(Frame* Env, TERM* term) {
     BASEINT functor;
     GetFunctor(term, &functor);
 
-    if (functor == FUNCT_FS_ATOM) {
+    if (functor == FUNCT_OBJ_ATOM) {
       // 素性構造
       jv = json_object();
       if (jv == 0) {

@@ -86,14 +86,14 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 | 素性項目名 | 設定型 | デフォルト値 | 説明 |
 | :--- | :--- | :--- | :--- |
 | input_atom | true / false | false | 入力をアトムとする(true)か文字コードリストとする(false)かを指定する。<br />本オプションは入力が`[]`のみの場合の挙動にのみ影響を与える。<br/>trueを指定した場合、パースエラーにならず空リストを返す。<br/>falseを指定した場合は空文字列とみなされパースエラーとなる。 |
-| obj2comp | true / false | false | trueを指定した場合、オブジェクトをfsファンクタによる複合項とする。<br/>falseを指定した場合は素性構造とする。 |
+| obj2comp | true / false | false | trueを指定した場合、オブジェクトをobjファンクタによる複合項とする。<br/>falseを指定した場合は素性構造とする。 |
 | str2comp | true / false | false | trueを指定した場合、文字列をstrファンクタによる複合項とする。<br/>falseを指定した場合はアトムとする。 |
 
 JSON要素とProlog節の対応は以下のとおり。
 
 | JSON要素   | Prolog節 | 備考 |
 | :---   | :---     | :---     |
-| object | 素性構造 | obj2compが有効な場合、素性構造ではなく<br/> fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項となる |
+| object | 素性構造 | obj2compが有効な場合、素性構造ではなく<br/> obj([a:b, ...])形式の値ペアのリストを含むobjによる複合項となる |
 | array  | リスト(＊1)   |  |
 | string | アトム(＊1)   | str2compが有効な場合、アトムではなく<br/> str([...])形式の文字コードリストを含むstrによる複合項となる<br/>str2compが無効な場合、変換後に`[]` `true` `false` `null`とstringの区別不可 |
 | number(整数) | 整数     | |
@@ -142,7 +142,7 @@ Prolog節とJSON要素の対応は以下のとおり。
 | true (アトム)  | true | |
 | false (アトム) | false | |
 | null (アトム)  | null | |
-| fs([a:b, ...])形式の値ペアのリストを含むfsによる複合項 | object |
+| obj([a:b, ...])形式の値ペアのリストを含むobjによる複合項 | object |
 | str([...])形式の文字コードリストを含むstrによる複合項 | string |
 
 - ＊1: `[]`(アトム)は例外的に空リストとみなす。

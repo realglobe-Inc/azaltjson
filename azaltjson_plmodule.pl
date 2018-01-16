@@ -56,7 +56,7 @@ azaltjson__changeterm([PRETERM | PRETERM残り], [TERM | TERM残り]):- nonvar(P
 	% リスト
 	azaltjson__changeterm(PRETERM, TERM),
 	azaltjson__changeterm(PRETERM残り, TERM残り).
-azaltjson__changeterm(PRETERM, TERM):- PRETERM = fs(PRETERM_PAIRLIST), !,
+azaltjson__changeterm(PRETERM, TERM):- PRETERM = obj(PRETERM_PAIRLIST), !,
 	% 素性構造の元
 	azaltjson__changeterm(PRETERM_PAIRLIST, TERM_PAIRLIST),
 	fs_list(TERM, TERM_PAIRLIST).
@@ -76,7 +76,7 @@ azaltjson__sanitize_term(TERM, SANTERM):- fstructure(TERM), !,
 	% 素性構造
 	fs_list(TERM, PAIRLIST),
 	azaltjson__sanitize_term(PAIRLIST, SANPAIRLIST),
-	SANTERM = fs(SANPAIRLIST).
+	SANTERM = obj(SANPAIRLIST).
 azaltjson__sanitize_term(TERM, SANTERM):- fs_av(TERM, ATTR, VALUE), !,
 	% 素性構造のペア
 	azaltjson__sanitize_term(VALUE, SANVALUE),

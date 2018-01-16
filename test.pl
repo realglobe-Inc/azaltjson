@@ -61,6 +61,7 @@ test(T, Exp, M):-
 alltest:-
 	test(json_term('', _),           fail, '空文字列はparseエラーになること'),
 	test(json_term("", _),           fail, '空文字列はparseエラーになること'),
+	test(json_term({input_atom: false}, '[]', _), fail, '空文字列はparseエラーになること'),
 	test(json_term(_, _),            9, '変数はparseエラーになること'),
 	test(json_term(aa(2), _),        9, '複合項はparseエラーになること'),
 	test(json_term(2, _),            9, '数値型はparseエラーになること'),
@@ -113,6 +114,8 @@ alltest:-
 		   '_"_\_/_日本語',
 		   '"_\"_\\_/_日本語"' % Unicode文字エスケープシーケンスは未対応
 		  ), 'エスケープ特殊文字'),
+	test(check(json_term, {obj2comp: true}, '{"aaa": 123}', obj([aaa:123])), 'obj2compオプション指定'),
+	test(check(json_term, {str2comp: true}, '{"aaa": "bbb"}', {aaa:str("bbb")}), 'str2compオプション指定'),
 	nl.
 
 :- alltest.
