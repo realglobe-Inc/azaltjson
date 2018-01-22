@@ -8,7 +8,7 @@ JSONとProlog節を相互変換できる。
 必要なもの
 -------
 
-* AZ-Prolog >= 9.64 (system/pl/fs_utility.plの素性構造型操作のユーティリティ(コンパイル組込述語）を使用可能なもの)
+* AZ-Prolog >= 9.63 (system/pl/fs_utility.plの素性構造型操作のユーティリティ(コンパイル組込述語）を使用可能なもの)
 * Jansson
   * Ubuntuの場合: `sudo apt-get install -y libjansson-dev`
   * macOSの場合: `brew install jansson`
