@@ -3,7 +3,7 @@ README
 ======
 
 azaltjsonは、AZ-PrologからJansson(JSONライブラリ)を利用するための拡張ライブラリである。
-JSONとProlog節を相互変換できる。
+JSONとProlog項を相互変換できる。
 
 必要なもの
 -------
@@ -74,11 +74,11 @@ API
 
 ### json_term(+OPTIONS, +JSON, -TERM)
 
-JSON文字列をProlog節へ変換する。
+JSON文字列をProlog項へ変換する。
 
 - OPTIONS: オプション指定
 - JSON: JSON文字列（アトムまたは文字コードリスト）
-- TERM: Prolog節
+- TERM: Prolog項
 
 OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 未知のオプションは無視される。
@@ -89,9 +89,9 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 | obj2comp | true / false | false | trueを指定した場合、オブジェクトをobjファンクタによる複合項とする。<br/>falseを指定した場合は素性構造とする。 |
 | str2comp | true / false | false | trueを指定した場合、文字列をstrファンクタによる複合項とする。<br/>falseを指定した場合はアトムとする。 |
 
-JSON要素とProlog節の対応は以下のとおり。
+JSON要素とProlog項の対応は以下のとおり。
 
-| JSON要素   | Prolog節 | 備考 |
+| JSON要素   | Prolog項 | 備考 |
 | :---   | :---     | :---     |
 | object | 素性構造 | obj2compが有効な場合、素性構造ではなく<br/> obj([a:b, ...])形式の値ペアのリストを含むobjによる複合項となる |
 | array  | リスト(＊1)   |  |
@@ -110,10 +110,10 @@ JSON要素とProlog節の対応は以下のとおり。
 
 ### term_json(+OPTIONS, +TERM, -JSON)
 
-Prolog節をJSON文字列へ変換する。
+Prolog項をJSON文字列へ変換する。
 
 - OPTIONS: オプション指定
-- TERM: Prolog節
+- TERM: Prolog項
 - JSON: JSON文字列（アトムまたは文字コードリスト）
 
 OPTIONSは素性構造で指定する。指定方法は以下のとおり。
@@ -130,9 +130,9 @@ OPTIONSは素性構造で指定する。指定方法は以下のとおり。
 | json_escape_slash   | true / false | false | trueを指定した場合、スラッシュ記号 `/` をエスケープ `\/` する。 |
 | json_real_precision | 数値（0以上）  | 17    | 最大で指定桁数の精度で浮動小数点数（整数以外の実数）を出力する。 |
 
-Prolog節とJSON要素の対応は以下のとおり。
+Prolog項とJSON要素の対応は以下のとおり。
 
-| Prolog節 | JSON要素 | 備考 |
+| Prolog項 | JSON要素 | 備考 |
 | :---   | :---     | :---     |
 | 素性構造 | object |  |
 | リスト (＊1)   | array | |
@@ -155,11 +155,11 @@ Prolog節とJSON要素の対応は以下のとおり。
 
 ### jsonfile_term(+OPTIONS, +JSON, -TERM)
 
-JSONファイルを入力してProlog節へ変換する。
+JSONファイルを入力してProlog項へ変換する。
 
 - OPTIONS: オプション指定
 - JSON: JSONファイルパス（アトムまたは文字コードリスト）
-- TERM: Prolog節
+- TERM: Prolog項
 
 詳細はjson_termと同様
 （`input_atom`オプションは無視される）
@@ -170,10 +170,10 @@ JSONファイルを入力してProlog節へ変換する。
 
 ### term_jsonfile(+OPTIONS, +TERM, +JSON)
 
-Prolog節をJSONファイルへ変換して出力する。
+Prolog項をJSONファイルへ変換して出力する。
 
 - OPTIONS: オプション指定
-- TERM: Prolog節
+- TERM: Prolog項
 - JSON: JSONファイルパス（アトムまたは文字コードリスト）
 
 詳細はterm_jsonと同様
@@ -246,7 +246,7 @@ A	= '{"aa": {"bb": [123, {"cc": "456", "10": 0.78900000000000003}]}}'
 kanji_mode毎の挙動
 -------
 
-### JSON文字列をProlog節へ
+### JSON文字列をProlog項へ
 
 - 入力のJSON文字列はアトムまたは1バイトずつ分かれている文字コードリストである必要がある。
 - str2compオプション指定時に生成される文字コードリストは1バイトずつ分かれる。
@@ -271,7 +271,7 @@ T	= str([227,131,158,227,131,171,227,131,129,227,131,144,227,130,164,227,131,136
 yes
 ```
 
-### Prolog節をJSON文字列へ
+### Prolog項をJSON文字列へ
 
 - 入力に含まれる文字コードリストは1バイトずつ分かれている必要がある。
 - output_codesオプション指定時に生成される文字コードリストは1バイトずつ分かれる。
